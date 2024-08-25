@@ -4,4 +4,4 @@ Parameters:
 
 --source-config - Specifies a filepath for a kubeconfig-file for use with the source Kubernetes cluster. Takes precedence over the KUBECONFIG environment variable. If --source-config is not specified, the script will attempt to retrieve a filepath from the KUBECONFIG environment variable.  
 
---retrieve-pvs  - Retrieves PVs and their associated filepath from the source cluster. Defaults to namespace default if no argument is passed.
+--retrieve-pvs  - Retrieves PVs and their associated filepath from the source cluster.
