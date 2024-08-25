@@ -49,7 +49,21 @@ def test_cluster_connectivity(source_config):
     print(f'An unexpected error occurred: {e}')
     return False
 
+# Function to retrieve existing PersistentVolumes from a namespace and their datadirectory (if present)
 
+def retrieve_pvs(namespace,kube_config):
+  config.load_kube_config(config_file=kube_config)
+  v1 = client.CoreV1Api()
+  # Check if the namespace provided exists in the targeted cluster
+  if namespace in v1.list.namespace():
+    print(f'Namespace {namespace} found in targeted cluster')
+    # Retrieve existing PersistentVolumes from the namespace
+    persistent_volumes = v1.list_persistent_volume()
+    print(persistent_volumes)
+    return True
+  else:
+    print(f'Namespace {namespace} was not found in targeted cluster')
+    return False
 
 # Function to check we have a kubeconf at our disposal. If the --source-config parameter was passed, we'll use that.
 # If the parameter wasn't passed, we use the $KUBECONFIG environment variable if it exists
@@ -82,7 +96,13 @@ def main(args):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--source-config', type=str, help='Path to the kubeconfig for the source cluster')
+  parser.add_argument('--source-config', 
+                      type=str,
+                      help='Path to the kubeconfig for the source cluster')
+  parser.add_argument('--retrieve-pvs',
+                      nargs = '?',
+                      const = 'default',
+                      help = 'Retrieve PVs from the targeted cluster. If no argument is passed to this, it defaults to the default namespace'  )
   args = parser.parse_args()
 
   main(args)
