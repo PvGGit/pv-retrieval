@@ -61,7 +61,7 @@ def retrieve_pvs(kube_config):
     return True
   else:
     print('No PersistentVolumes were found in the cluster.')
-    return True
+    return False
   
 
 # Function to check we have a kubeconf at our disposal. If the --source-config parameter was passed, we'll use that.
