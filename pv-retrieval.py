@@ -55,11 +55,11 @@ def retrieve_pvs(namespace,kube_config):
   config.load_kube_config(config_file=kube_config)
   v1 = client.CoreV1Api()
   # Check if the namespace provided exists in the targeted cluster
-  if namespace in v1.list.namespace():
+  if namespace in [ns.metadata.name for ns in v1.list_namespace().items]:
     print(f'Namespace {namespace} found in targeted cluster')
     # Retrieve existing PersistentVolumes from the namespace
     persistent_volumes = v1.list_persistent_volume()
-    print(persistent_volumes)
+    print(persistent_volumes.items[0].metadata.name)
     return True
   else:
     print(f'Namespace {namespace} was not found in targeted cluster')
@@ -91,6 +91,10 @@ def main(args):
     print('Cluster connectivity verified.')
   else:
     print('Cluster connectivity failed. Please provided a valid kubeconf file, either through --source-config or by setting the KUBECONFIG variable')
+    sys.exit(1)
+  # If --retrieve-pvs was used, invoke the function to retrieve the PVs. For now, we use the default namespace.
+  if args.retrieve_pvs:
+    retrieve_pvs(args.retrieve_pvs, source_config)
 
   
 
