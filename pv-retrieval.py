@@ -51,19 +51,18 @@ def test_cluster_connectivity(source_config):
 
 # Function to retrieve existing PersistentVolumes from a namespace and their datadirectory (if present)
 
-def retrieve_pvs(namespace,kube_config):
+def retrieve_pvs(kube_config):
   config.load_kube_config(config_file=kube_config)
   v1 = client.CoreV1Api()
-  # Check if the namespace provided exists in the targeted cluster
-  if namespace in [ns.metadata.name for ns in v1.list_namespace().items]:
-    print(f'Namespace {namespace} found in targeted cluster')
-    # Retrieve existing PersistentVolumes from the namespace
-    persistent_volumes = v1.list_persistent_volume()
-    print(persistent_volumes.items[0].metadata.name)
+  # Retrieve PersistentVolumes and list them if present
+  persistent_volumes = v1.list_persistent_volume()
+  if persistent_volumes:
+    print(f'The following PersistentVolumes were found: {persistent_volumes.items[0].metadata.name}')
     return True
   else:
-    print(f'Namespace {namespace} was not found in targeted cluster')
-    return False
+    print('No PersistentVolumes were found in the cluster.')
+    return True
+  
 
 # Function to check we have a kubeconf at our disposal. If the --source-config parameter was passed, we'll use that.
 # If the parameter wasn't passed, we use the $KUBECONFIG environment variable if it exists
@@ -92,9 +91,9 @@ def main(args):
   else:
     print('Cluster connectivity failed. Please provided a valid kubeconf file, either through --source-config or by setting the KUBECONFIG variable')
     sys.exit(1)
-  # If --retrieve-pvs was used, invoke the function to retrieve the PVs. For now, we use the default namespace.
+  # If --retrieve-pvs was used, invoke the function to retrieve the PVs.
   if args.retrieve_pvs:
-    retrieve_pvs(args.retrieve_pvs, source_config)
+    retrieve_pvs(source_config)
 
   
 
@@ -104,9 +103,8 @@ if __name__ == "__main__":
                       type=str,
                       help='Path to the kubeconfig for the source cluster')
   parser.add_argument('--retrieve-pvs',
-                      nargs = '?',
-                      const = 'default',
-                      help = 'Retrieve PVs from the targeted cluster. If no argument is passed to this, it defaults to the default namespace'  )
+                      action = 'store_true',
+                      help = 'Retrieve PVs from the targeted cluster.'  )
   args = parser.parse_args()
 
   main(args)
