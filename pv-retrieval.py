@@ -49,7 +49,7 @@ def test_cluster_connectivity(source_config):
     print(f'An unexpected error occurred: {e}')
     return False
 
-# Function to retrieve existing PersistentVolumes from a namespace and their datadirectory (if present)
+# Function to retrieve existing PersistentVolumes from a cluster and their datadirectory (if present)
 
 def retrieve_pvs(kube_config):
   config.load_kube_config(config_file=kube_config)
