@@ -5,7 +5,6 @@ from kubernetes import client,config # Needed to interact with the cluster
 from kubernetes.client.rest import ApiException
 
 # Function to check if filepaths exist and are readable.
-
 def is_file_readable(file_path):
   # Is it an existing file?
   if os.path.isfile(file_path):
@@ -20,7 +19,6 @@ def is_file_readable(file_path):
     return False
 
 # Function to retrieve KUBECONFIG from the environment variables if present
-
 def retrieve_kubeconfig_env():
   if 'KUBECONFIG' in os.environ:
     kubeconfig=os.environ.get('KUBECONFIG')
@@ -50,7 +48,6 @@ def test_cluster_connectivity(source_config):
     return False
 
 # Function to retrieve existing PersistentVolumes from a cluster and their datadirectory (if present)
-
 def retrieve_pvs(kube_config):
   config.load_kube_config(config_file=kube_config)
   v1 = client.CoreV1Api()
@@ -65,10 +62,6 @@ def retrieve_pvs(kube_config):
     print('No PersistentVolumes were found in the cluster.')
     return False
   
-
-# Function to check we have a kubeconf at our disposal. If the --source-config parameter was passed, we'll use that.
-# If the parameter wasn't passed, we use the $KUBECONFIG environment variable if it exists
-# If neither are present, we stop and tell the user to fix it.
 
 def main(args):
   # First check if a source_config was passed and if so, if it is a valid file
