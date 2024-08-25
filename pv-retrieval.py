@@ -33,9 +33,9 @@ def retrieve_kubeconfig_env():
     return False
 
 # Function to check cluster connectivity. For now, we'll assume that being able to retrieve all namespaces is sufficient.
-def test_cluster_connectivity(source_config):
+def test_cluster_connectivity(kube_config):
   try:
-      config.load_kube_config(config_file=source_config)
+      config.load_kube_config(config_file=kube_config)
       v1 = client.CoreV1Api()
       namespaces = v1.list_namespace()
       print('Cluster connectivity is alright!')
