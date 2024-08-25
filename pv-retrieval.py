@@ -57,7 +57,9 @@ def retrieve_pvs(kube_config):
   # Retrieve PersistentVolumes and list them if present
   persistent_volumes = v1.list_persistent_volume()
   if persistent_volumes:
-    print(f'The following PersistentVolumes were found: {persistent_volumes.items[0].metadata.name}')
+    print('The following PersistentVolumes were found:')
+    for item in persistent_volumes.items:
+      print(item.metadata.name)
     return True
   else:
     print('No PersistentVolumes were found in the cluster.')
