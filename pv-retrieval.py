@@ -33,9 +33,18 @@ def retrieve_kubeconfig_env():
     return False
 
 # Function to check cluster connectivity. For now, we'll assume that being able to retrieve all namespaces is sufficient.
-def test_cluster_connectivity(kube_config):
+def check_context_connectivity(kube_config, context):
   try:
       config.load_kube_config(config_file=kube_config)
+      contexts = config.list_kube_config_contexts()
+      # Are there contexts in the kubeconfig file?
+      if not contexts:
+        print('No contexts found in kubeconfig')
+        return False
+      # Is the passed context present in the kubeconfig file?
+
+
+
       v1 = client.CoreV1Api()
       namespaces = v1.list_namespace()
       print('Cluster connectivity is alright!')
@@ -66,6 +75,7 @@ def retrieve_pvs(kube_config):
 def main(args):
   # First check if a kube_config was passed and if so, if it is a valid file
   kube_config = args.kube_config
+  source_context = args.source_context
   if kube_config:
     if is_file_readable(kube_config):
       print('Source config passed and found to be a readable file')
@@ -81,7 +91,7 @@ def main(args):
       print('No source kubeconfig was passed, and no valid config file found in KUBECONFIG environment variable.')
       sys.exit(1)
   # Now let's find out if the source config or KUBECONFIG is valid to connect to the cluster
-  if test_cluster_connectivity(kube_config):
+  if check_context_connectivity(kube_config, source_context):
     print('Cluster connectivity verified.')
   else:
     print('Cluster connectivity failed. Please provided a valid kubeconf file, either through --source-config or by setting the KUBECONFIG variable')
