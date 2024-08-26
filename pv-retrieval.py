@@ -96,38 +96,39 @@ def main(args):
   kube_config = args.kube_config
   source_context = args.source_context
   target_context = args.target_context
+  # If kube-config was passed, let's see if we can access it
   if kube_config:
     if is_file_readable(kube_config):
-      print('Source config passed and found to be a readable file')
+      print('Kube config passed and found to be a readable file')
     else:
-      print('Please provide a valid path when using --source-config')
+      print('Please provide a valid path when using --kube-config')
       sys.exit(1)
-  # If not, then let's see if we can retrieve a valid path from $KUBECONFIG
+  # If kube-config was not passed, then let's see if we can retrieve a valid path from $KUBECONFIG
   else:
     kube_config=retrieve_kubeconfig_env()
     if kube_config:
       print(f'Kubeconfig retrieved from KUBECONFIG environment variable: {kube_config}')
     else:
-      print('No source kubeconfig was passed, and no valid config file found in KUBECONFIG environment variable.')
+      print('No kube-config was passed, and no valid config file found in KUBECONFIG environment variable.')
       sys.exit(1)
-  # Now let's find out if the source config or KUBECONFIG is valid to connect to the cluster
+  # Now let's find out if kube-config or KUBECONFIG is valid to connect to the source cluster
   if check_context_connectivity(kube_config, source_context):
     print('Source cluster connectivity verified.')
   else:
-    print('Source cluster connectivity failed. Please provided a valid kubeconf file, either through --kube-config or by setting the KUBECONFIG variable')
+    print(f'Source cluster connectivity failed. Please check the context definition in {kube_config}')
     sys.exit(1)
   # If target-context was passed, let's check if we can connect to the context specified
   if target_context:
     if check_context_connectivity(kube_config, target_context):
       print('Target cluster connectivity verified')
     else:
-      print('Target cluster connectivity failed.')
+      print(f'Target cluster connectivity failed. Please check the context definition in {kube_config}')
       sys.exit(1)
   # If --retrieve-pvs was used, invoke the function to retrieve the PVs.
   if args.retrieve_pvs:
     retrieve_pvs(kube_config)
 
-  
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
