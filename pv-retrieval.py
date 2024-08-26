@@ -146,6 +146,7 @@ def match_pvs(source_pvs, target_pvs):
   # Print statement for debugging purposes
   for item in matched_pvs:
     print(f"Source PV called {item['source_pv']['name']} matches with target PV called {item['target_pv']['name']}")
+    print(f"Data dirs: {item['source_pv']['data_dir']} {item['target_pv']['data_dir']}")
 
 
 
