@@ -90,13 +90,33 @@ def list_pvs(kube_config, context):
 
 # Function to retrieve PVs from both clusters and match them together
 def retrieve_pvs(kube_config, source_context, target_context):
-  source_pvs = list_pvs(kube_config, source_context)
+  source_pvs_full = list_pvs(kube_config, source_context)
   # If PVs were returned for source-context, we continue on to the target context
-  if source_pvs:
-    target_pvs = list_pvs(kube_config, target_context)
+  if source_pvs_full:
+    # Let's extract just the values we need for our purposes
+    source_pvs = [
+      {'name': item.metadata.name if item.metadata.name else 'not defined',
+      'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
+      'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
+      'data_dir': item.spec.nfs.path if item.spec.nfs.path else 'not defined'
+      } for item in source_pvs_full.items
+    ]
+    # Print statement below for debugging purposes
+    #print(f'source_pvs is populated with: {source_pvs}')
+    target_pvs_full = list_pvs(kube_config, target_context)
     # If PVs were returned for target-context, we call the matching function
-    if target_pvs:
-      # CALL MATCHING FUNCTION HERE
+    if target_pvs_full:
+      target_pvs = [
+      {'name': item.metadata.name if item.metadata.name else 'not defined',
+      'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
+      'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
+      'data_dir': item.spec.nfs.path if item.spec.nfs.path else 'not defined'
+      } for item in target_pvs_full.items
+      ]
+      # Print statement below for debugging purposes
+      #print(f'target_pvs is populated with {target_pvs}')
+      
+      # Now that we have both dicts populated, it's time to match them
       print('Matching function called')
     else:
       print(f'No PersistentVolumes were found in context {target_context}')
