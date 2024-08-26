@@ -64,37 +64,37 @@ def retrieve_pvs(kube_config):
   
 
 def main(args):
-  # First check if a source_config was passed and if so, if it is a valid file
-  source_config = args.source_config
-  if source_config:
-    if is_file_readable(source_config):
+  # First check if a kube_config was passed and if so, if it is a valid file
+  kube_config = args.kube_config
+  if kube_config:
+    if is_file_readable(kube_config):
       print('Source config passed and found to be a readable file')
     else:
       print('Please provide a valid path when using --source-config')
       sys.exit(1)
   # If not, then let's see if we can retrieve a valid path from $KUBECONFIG
   else:
-    source_config=retrieve_kubeconfig_env()
-    if source_config:
-      print(f'Kubeconfig retrieved from KUBECONFIG environment variable: {source_config}')
+    kube_config=retrieve_kubeconfig_env()
+    if kube_config:
+      print(f'Kubeconfig retrieved from KUBECONFIG environment variable: {kube_config}')
     else:
       print('No source kubeconfig was passed, and no valid config file found in KUBECONFIG environment variable.')
       sys.exit(1)
   # Now let's find out if the source config or KUBECONFIG is valid to connect to the cluster
-  if test_cluster_connectivity(source_config):
+  if test_cluster_connectivity(kube_config):
     print('Cluster connectivity verified.')
   else:
     print('Cluster connectivity failed. Please provided a valid kubeconf file, either through --source-config or by setting the KUBECONFIG variable')
     sys.exit(1)
   # If --retrieve-pvs was used, invoke the function to retrieve the PVs.
   if args.retrieve_pvs:
-    retrieve_pvs(source_config)
+    retrieve_pvs(kube_config)
 
   
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--source-config', 
+  parser.add_argument('--kube-config', 
                       type=str,
                       help='Path to the kubeconfig for the source cluster')
   parser.add_argument('--retrieve-pvs',
