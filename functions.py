@@ -193,7 +193,7 @@ def match_pvs(source_pvs, target_pvs):
 
 # Function to check the validity of a supplied mapping file
 def is_valid_mapping_file(mapping_file):
-  pattern = re.compile(r'^([a-z0-9]([-a-z0-9]*[a-z0-9])?):([a-z0-9]([-a-z0-9]*[a-z0-9])?),([a-z0-9]([-a-z0-9]*[a-z0-9])?):([a-z0-9]([-a-z0-9]*[a-z0-9])?)$')
+  pattern = re.compile(r'^[a-z0-9]([-a-z0-9]*[a-z0-9]):[a-z0-9]([-a-z0-9]*[a-z0-9]),[a-z0-9]([-a-z0-9]*[a-z0-9]):[a-z0-9]([-a-z0-9]*[a-z0-9])$')
 
   with open(mapping_file, 'r') as file:
     for line_number, line in enumerate(file, start=1):
