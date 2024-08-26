@@ -2,6 +2,10 @@ This Python-script allows you to retrieve filepaths for PVs in Kubernetes.
 
 Parameters:  
 
---source-config - Specifies a filepath for a kubeconfig-file for use with the source Kubernetes cluster. Takes precedence over the KUBECONFIG environment variable. If --source-config is not specified, the script will attempt to retrieve a filepath from the KUBECONFIG environment variable.  
+--kube-config - Specifies a filepath for a kubeconfig-file. Takes precedence over the KUBECONFIG environment variable. If --kube-config is not specified, the script will attempt to retrieve a filepath from the KUBECONFIG environment variable. Should contain necessary contexts for both source and target cluster.
 
---retrieve-pvs  - Retrieves PVs and their associated filepath from the source cluster.
+--source-context - Specifies the context to use for the source cluster, in the format user@cluster as specified in the kube-config file
+
+--target-context - Specifies the context to use for the target cluster, in the format user@cluster as specified in the kube-config file
+
+
