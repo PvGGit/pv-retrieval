@@ -189,3 +189,8 @@ def match_pvs(source_pvs, target_pvs):
   for item in matched_pvs:
     print(f"Source PV called {item['source_pv']['name']} matches with target PV called {item['target_pv']['name']}")
     print(f"Data dirs: {item['source_pv']['data_dir']} {item['target_pv']['data_dir']}")
+
+# Function to check the validity of a supplied mapping file
+def is_valid_mapping_file(mapping_file):
+  print('Function to check validity of mapping file was called')
+  return True

@@ -1,13 +1,13 @@
 import argparse
 import sys
-from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,list_pvs,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,match_pvs
+from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,list_pvs,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,match_pvs,is_valid_mapping_file
 
 def main(args):
-  # First check if a kube_config was passed and if so, if it is a valid file
   kube_config = args.kube_config
   source_context = args.source_context
   target_context = args.target_context
   retrieve_pvcs = args.retrieve_pvcs
+  mapping_file = args.mapping_file
   # If kube-config was passed, let's see if we can access it
   if kube_config:
     if is_file_readable(kube_config):
@@ -50,12 +50,28 @@ def main(args):
   # Now that we have both source and target contexts validated, we call upon retrieve_pvs to do its magic.
   # Commented out for now, development purposes
   # retrieve_pvs(kube_config, source_context, target_context)
+
   # If retrieve-pvcs was passed, call the retrieve_pvcs function
   if retrieve_pvcs:
     if ( (retrieve_pvcs=='both' or retrieve_pvcs=='target') and (not target_context)):
       print("Can't use options 'both' or 'target' without --target-context set")
     else:
       retrieve_pvcs_from_clusters(kube_config, retrieve_pvcs, source_context, target_context)
+
+  # If a mapping file was passed, let's process it
+  if mapping_file:
+    # Is it readable?
+    if is_file_readable(mapping_file):
+      print(f'Mapping file found to be readable at {mapping_file}')
+    else:
+      print(f'Mapping was not found or not readable at {mapping_file}')
+      sys.exit(1)
+    # If the file is found and readable, does it match the required structure?
+    if is_valid_mapping_file(mapping_file):
+      print('Mapping file is valid')
+    else:
+      print('Mapping file does not match required structure')
+    
 
 
 if __name__ == "__main__":
@@ -72,6 +88,10 @@ if __name__ == "__main__":
   parser.add_argument('--retrieve-pvcs',
                       choices = ['source', 'target', 'both'],
                       help='Retrieve bound PVCs in cluster. Creates pvc_listing_<choice>.txt file in the present working directory')
+  parser.add_argument('--mapping-file',
+                      type=str,
+                      help='Path to mapping file')
+
   args = parser.parse_args()
 
   
