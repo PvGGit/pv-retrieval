@@ -142,7 +142,10 @@ def main(args):
   else:
     kube_config=retrieve_kubeconfig_env()
     if kube_config:
-      print(f'Kubeconfig retrieved from KUBECONFIG environment variable: {kube_config}')
+      if is_file_readable(kube_config):
+        print(f'Kubeconfig retrieved from KUBECONFIG environment variable: {kube_config}')
+      else:
+        print(f'Kubeconfig retrieved from KUBECONFIG environment variable, but file is not readable: {kube_config}')
     else:
       print('No kube-config was passed, and no valid config file found in KUBECONFIG environment variable.')
       sys.exit(1)
