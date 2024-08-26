@@ -95,6 +95,7 @@ def main(args):
   # First check if a kube_config was passed and if so, if it is a valid file
   kube_config = args.kube_config
   source_context = args.source_context
+  target_context = args.target_context
   if kube_config:
     if is_file_readable(kube_config):
       print('Source config passed and found to be a readable file')
@@ -111,10 +112,17 @@ def main(args):
       sys.exit(1)
   # Now let's find out if the source config or KUBECONFIG is valid to connect to the cluster
   if check_context_connectivity(kube_config, source_context):
-    print('Cluster connectivity verified.')
+    print('Source cluster connectivity verified.')
   else:
-    print('Cluster connectivity failed. Please provided a valid kubeconf file, either through --source-config or by setting the KUBECONFIG variable')
+    print('Source cluster connectivity failed. Please provided a valid kubeconf file, either through --kube-config or by setting the KUBECONFIG variable')
     sys.exit(1)
+  # If target-context was passed, let's check if we can connect to the context specified
+  if target_context:
+    if check_context_connectivity(kube_config, target_context):
+      print('Target cluster connectivity verified')
+    else:
+      print('Target cluster connectivity failed.')
+      sys.exit(1)
   # If --retrieve-pvs was used, invoke the function to retrieve the PVs.
   if args.retrieve_pvs:
     retrieve_pvs(kube_config)
@@ -132,6 +140,11 @@ if __name__ == "__main__":
   parser.add_argument('--source-context',
                       type=str,
                       help='Define the source context to be used. Will use active context if present')
+  parser.add_argument('--target-context',
+                      type=str,
+                      help='Define the source context to be used. Does not default to active context')
   args = parser.parse_args()
+
+  
 
   main(args)
