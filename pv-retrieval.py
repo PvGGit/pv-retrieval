@@ -87,6 +87,27 @@ def list_pvs(kube_config, context):
     return persistent_volumes
   else:
     return False
+  
+# Function to retrieve bound PVCs in a cluster
+def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_context):
+    config.load_kube_config(config_file=kube_config)
+    # Retrieve the PVs from the source-context
+    if (target=='source' or target=='both'):
+      v1 = client.CoreV1Api(
+        api_client=config.new_client_from_config(context=source_context)
+      )
+      source_volumes = v1.list_persistent_volume()
+      # We'll ignore PVs that are not set to Bound
+      print(source_volumes.items)
+
+
+      # Retrieve the PVs from the target-context
+      if (target=='target' or target=='both'):
+        v1 = client.CoreV1Api(
+          api_client=config.new_client_from_config(context=target_context)
+        )
+        target_volumes = v1.list_persistent_volume()
+
 
 # Function to retrieve PVs from both clusters and match them together
 def retrieve_pvs(kube_config, source_context, target_context):
@@ -155,6 +176,7 @@ def main(args):
   kube_config = args.kube_config
   source_context = args.source_context
   target_context = args.target_context
+  retrieve_pvcs = args.retrieve_pvcs
   # If kube-config was passed, let's see if we can access it
   if kube_config:
     if is_file_readable(kube_config):
@@ -187,7 +209,12 @@ def main(args):
       print(f'Target cluster connectivity failed. Please check the context definition in {kube_config}')
       sys.exit(1)
   # Now that we have both source and target contexts validated, we call upon retrieve_pvs to do its magic.
-  retrieve_pvs(kube_config, source_context, target_context)
+  # Commented out for now, development purposes
+  # retrieve_pvs(kube_config, source_context, target_context)
+  # If retrieve-pvcs was passed, call the retrieve_pvcs function
+  if retrieve_pvcs:
+    retrieve_pvcs_from_clusters(kube_config, retrieve_pvcs, source_context, target_context)
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -200,6 +227,9 @@ if __name__ == "__main__":
   parser.add_argument('--target-context',
                       type=str,
                       help='Define the source context to be used. Does not default to active context')
+  parser.add_argument('--retrieve-pvcs',
+                      choices = ['source', 'target', 'both'],
+                      help='Retrieve bound PVCs in cluster. Creates pvc_listing_<choice>.txt file in the present working directory')
   args = parser.parse_args()
 
   
