@@ -1,7 +1,7 @@
 import os 
 import argparse
 import sys
-from kubernetes import client,config # Needed to interact with the cluster
+from kubernetes import client,config # Needed to interact with the cluster, pip install kubernetes
 from kubernetes.client.rest import ApiException
 
 # Function to check if filepaths exist and are readable.
@@ -100,6 +100,10 @@ if __name__ == "__main__":
   parser.add_argument('--retrieve-pvs',
                       action = 'store_true',
                       help = 'Retrieve PVs from the targeted cluster.'  )
+  parser.add_argument('--source-context',
+                      type=str,
+                      required = True,
+                      help='Define the source context to be used.')
   args = parser.parse_args()
 
   main(args)
