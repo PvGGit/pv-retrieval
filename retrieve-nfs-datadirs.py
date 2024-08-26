@@ -1,6 +1,6 @@
 import argparse
 import sys
-import functions
+from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,list_pvs,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,match_pvs
 
 def main(args):
   # First check if a kube_config was passed and if so, if it is a valid file
@@ -52,7 +52,10 @@ def main(args):
   # retrieve_pvs(kube_config, source_context, target_context)
   # If retrieve-pvcs was passed, call the retrieve_pvcs function
   if retrieve_pvcs:
-    retrieve_pvcs_from_clusters(kube_config, retrieve_pvcs, source_context, target_context)
+    if ( (retrieve_pvcs=='both' or retrieve_pvcs=='target') and (not target_context)):
+      print("Can't use options 'both' or 'target' without --target-context set")
+    else:
+      retrieve_pvcs_from_clusters(kube_config, retrieve_pvcs, source_context, target_context)
 
 
 if __name__ == "__main__":

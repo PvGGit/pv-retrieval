@@ -1,4 +1,7 @@
 # Ignore development directory
 dev/
+# Ignore output files
 source_pvcs.txt
 target_pvcs.txt
+# Ignore pycache library
+__pycache__
