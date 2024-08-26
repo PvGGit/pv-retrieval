@@ -25,7 +25,10 @@ def retrieve_kubeconfig_env():
     print(f'KUBECONFIG was found in environment variables: {kubeconfig}')
     # Is the file readable? If so, return it to its caller
     if is_file_readable(kubeconfig):
-      return kubeconfig
+      config.load_kube_config(config_file=kubeconfig)
+      contexts, active_context = config.list_kube_config_contexts()
+      return {'kubeconfig':kubeconfig,
+              'source_context': active_context['name']}
     else:
       return False
   else:
@@ -203,7 +206,12 @@ def main(args):
       sys.exit(1)
   # If kube-config was not passed, then let's see if we can retrieve a valid path from $KUBECONFIG
   else:
-    kube_config=retrieve_kubeconfig_env()
+    results=retrieve_kubeconfig_env()
+    if results:
+      kube_config = results['kubeconfig']
+      # If source_context was not passed, use the active context retrieved from KUBECONFIG environment variable
+      if not source_context:
+        source_context = results['source_context']
     if kube_config:
       if is_file_readable(kube_config):
         print(f'Kubeconfig retrieved from KUBECONFIG environment variable: {kube_config}')
