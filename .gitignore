@@ -1,2 +1,4 @@
 # Ignore development directory
 dev/
+source_pvcs.txt
+target_pvcs.txt
