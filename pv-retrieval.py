@@ -75,21 +75,36 @@ def check_context_connectivity(kube_config, context):
     print(f'An unexpected error occurred: {e}')
     return False
 
-# Function to retrieve existing PersistentVolumes from a cluster and their datadirectory (if present)
-def retrieve_pvs(kube_config):
+# Function to list existing PersistentVolumes from a cluster
+def list_pvs(kube_config, context):
   config.load_kube_config(config_file=kube_config)
-  v1 = client.CoreV1Api()
-  # Retrieve PersistentVolumes and list them if present
+  v1 = client.CoreV1Api(
+    api_client=config.new_client_from_config(context=context)
+  )
+  # List PersistentVolumes and return if found
   persistent_volumes = v1.list_persistent_volume()
   if persistent_volumes:
-    print('The following PersistentVolumes were found:')
-    for item in persistent_volumes.items:
-      print(item.metadata.name)
-    return True
+    return persistent_volumes
   else:
-    print('No PersistentVolumes were found in the cluster.')
     return False
-  
+
+# Function to retrieve PVs from both clusters and match them together
+def retrieve_pvs(kube_config, source_context, target_context):
+  source_pvs = list_pvs(kube_config, source_context)
+  # If PVs were returned for source-context, we continue on to the target context
+  if source_pvs:
+    target_pvs = list_pvs(kube_config, target_context)
+    # If PVs were returned for target-context, we call the matching function
+    if target_pvs:
+      # CALL MATCHING FUNCTION HERE
+      print('Matching function called')
+    else:
+      print(f'No PersistentVolumes were found in context {target_context}')
+      sys.exit(1)
+  else:
+    print(f'No PersistentVolumes were found in context {source_context}')
+    sys.exit(1)
+
 
 def main(args):
   # First check if a kube_config was passed and if so, if it is a valid file
@@ -124,8 +139,8 @@ def main(args):
     else:
       print(f'Target cluster connectivity failed. Please check the context definition in {kube_config}')
       sys.exit(1)
-
-
+  # Now that we have both source and target contexts validated, we call upon retrieve_pvs to do its magic.
+  retrieve_pvs(kube_config, source_context, target_context)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
