@@ -6,6 +6,8 @@ Parameters:
 
 --source-context - Specifies the context to use for the source cluster, in the format user@cluster as specified in the kube-config file
 
---target-context - Specifies the context to use for the target cluster, in the format user@cluster as specified in the kube-config file
+--target-context - Specifies the context to use for the target cluster, in the format user@cluster as specified in the kube-config file  
+
+--retrieve-pvcs - Retrieve PVCs bound to existing PVs in a namespace:pvc-name format for source cluster, target cluster or both and writes this to file
 
 
