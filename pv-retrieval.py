@@ -35,20 +35,39 @@ def retrieve_kubeconfig_env():
 # Function to check cluster connectivity. For now, we'll assume that being able to retrieve all namespaces is sufficient.
 def check_context_connectivity(kube_config, context):
   try:
+      # Get config loaded up and extract contexts and active_context from the config
       config.load_kube_config(config_file=kube_config)
-      contexts = config.list_kube_config_contexts()
+      contexts, active_context = config.list_kube_config_contexts()
+      
       # Are there contexts in the kubeconfig file?
       if not contexts:
         print('No contexts found in kubeconfig')
         return False
-      # Is the passed context present in the kubeconfig file?
+      
+      # Use the active context if no parameter was passed for context and there is an active_context
+      if (not context) and active_context:
+        context = active_context['name']
 
-
-
-      v1 = client.CoreV1Api()
-      namespaces = v1.list_namespace()
-      print('Cluster connectivity is alright!')
-      return True
+      # Is the context (either passed or from active_context) present in the kubeconfig file?
+      contexts = [item['name'] for item in contexts]
+      if context not in contexts:
+        print(f'The context {context} was not found in the kubeconfig file')
+        return False
+      
+      # If the passed context is present, try to list namespaces
+      else:
+        v1 = client.CoreV1Api(
+          api_client=config.new_client_from_config(context=context)
+        )
+        namespaces = v1.list_namespace()
+        if namespaces:
+          print('Cluster connectivity is alright!')
+          return True
+        else:
+          print(f'No namespaces found in context {context}')
+          return False
+        
+  # Handle exceptions      
   except ApiException as e:
     print(f'Error when connecting to cluster: {e}')
     return False
@@ -112,8 +131,7 @@ if __name__ == "__main__":
                       help = 'Retrieve PVs from the targeted cluster.'  )
   parser.add_argument('--source-context',
                       type=str,
-                      required = True,
-                      help='Define the source context to be used.')
+                      help='Define the source context to be used. Will use active context if present')
   args = parser.parse_args()
 
   main(args)
