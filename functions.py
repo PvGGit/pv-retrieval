@@ -3,6 +3,7 @@ import argparse
 import sys
 from kubernetes import client,config # Needed to interact with the cluster, pip install kubernetes
 from kubernetes.client.rest import ApiException
+import re
 
 # Function to check if filepaths exist and are readable.
 def is_file_readable(file_path):
@@ -192,5 +193,14 @@ def match_pvs(source_pvs, target_pvs):
 
 # Function to check the validity of a supplied mapping file
 def is_valid_mapping_file(mapping_file):
-  print('Function to check validity of mapping file was called')
-  return True
+  pattern = re.compile(r'^([a-z0-9]([-a-z0-9]*[a-z0-9])?):([a-z0-9]([-a-z0-9]*[a-z0-9])?),([a-z0-9]([-a-z0-9]*[a-z0-9])?):([a-z0-9]([-a-z0-9]*[a-z0-9])?)$')
+
+  with open(mapping_file, 'r') as file:
+    for line_number, line in enumerate(file, start=1):
+      line = line.strip()
+      if not pattern.match(line):
+        print(f"Error found in line {line_number} in mapping file. Lines should consist of namespace:pvc-name,namespace:pvc-name only. Namespace and PVCs should adhere to Kubernetes naming conventions.")
+        return False
+      else:
+        return True
+              
