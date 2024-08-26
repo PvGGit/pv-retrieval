@@ -124,9 +124,6 @@ def main(args):
     else:
       print(f'Target cluster connectivity failed. Please check the context definition in {kube_config}')
       sys.exit(1)
-  # If --retrieve-pvs was used, invoke the function to retrieve the PVs.
-  if args.retrieve_pvs:
-    retrieve_pvs(kube_config)
 
 
 
@@ -134,10 +131,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('--kube-config', 
                       type=str,
-                      help='Path to the kubeconfig for the source cluster')
-  parser.add_argument('--retrieve-pvs',
-                      action = 'store_true',
-                      help = 'Retrieve PVs from the targeted cluster.'  )
+                      help='Path to the kubeconfig file. Defaults to the KUBECONFIG environment variable if not specified')
   parser.add_argument('--source-context',
                       type=str,
                       help='Define the source context to be used. Will use active context if present')
