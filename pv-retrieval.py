@@ -117,13 +117,35 @@ def retrieve_pvs(kube_config, source_context, target_context):
       #print(f'target_pvs is populated with {target_pvs}')
       
       # Now that we have both dicts populated, it's time to match them
-      print('Matching function called')
+      match_pvs(source_pvs, target_pvs)
     else:
       print(f'No PersistentVolumes were found in context {target_context}')
       sys.exit(1)
   else:
     print(f'No PersistentVolumes were found in context {source_context}')
     sys.exit(1)
+
+# Function to match the retrieved PVs from source and target cluster
+def match_pvs(source_pvs, target_pvs):
+  matched_pvs = []
+  # Debugging prints
+  print(source_pvs)
+  print(target_pvs)
+  # Loop through the source_pvs list and match pvc_name and pvc_ns onto target_pvs
+  """
+  for source_item in source_pvs:
+      matching_target_item = [target_item for target_item in target_pvs if (target_item.pvc_name==source_item.pvc_name and target_item.pvc_ns==source_item.pvc_ns)]
+      # If we found a match, add the source_item and matching_target_item to the matched_pvs list
+      if matching_target_item:
+        matched_pvs.append({
+          'source_pv' : source_item,
+          'target_pv' : matching_target_item  
+        })
+  """
+  # Print statement for debugging purposes
+  print(matched_pvs)
+
+
 
 
 def main(args):
