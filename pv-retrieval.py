@@ -129,22 +129,23 @@ def retrieve_pvs(kube_config, source_context, target_context):
 def match_pvs(source_pvs, target_pvs):
   matched_pvs = []
   # Debugging prints
-  print(source_pvs)
-  print(target_pvs)
+  #print(source_pvs)
+  #print(target_pvs)
   # Loop through the source_pvs list and match pvc_name and pvc_ns onto target_pvs
-  """
   for source_item in source_pvs:
-      matching_target_item = [target_item for target_item in target_pvs if (target_item.pvc_name==source_item.pvc_name and target_item.pvc_ns==source_item.pvc_ns)]
+      matching_target_item = next(
+        (target_item for target_item in target_pvs if (target_item['pvc_name']==source_item['pvc_name'] and target_item['pvc_ns']==source_item['pvc_ns'])),
+        None
+      )
       # If we found a match, add the source_item and matching_target_item to the matched_pvs list
       if matching_target_item:
         matched_pvs.append({
           'source_pv' : source_item,
           'target_pv' : matching_target_item  
         })
-  """
   # Print statement for debugging purposes
-  print(matched_pvs)
-
+  for item in matched_pvs:
+    print(f"Source PV called {item['source_pv']['name']} matches with target PV called {item['target_pv']['name']}")
 
 
 
