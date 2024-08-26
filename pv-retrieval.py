@@ -27,8 +27,7 @@ def retrieve_kubeconfig_env():
     if is_file_readable(kubeconfig):
       config.load_kube_config(config_file=kubeconfig)
       contexts, active_context = config.list_kube_config_contexts()
-      return {'kubeconfig':kubeconfig,
-              'source_context': active_context['name']}
+      return kubeconfig
     else:
       return False
   else:
@@ -46,11 +45,7 @@ def check_context_connectivity(kube_config, context):
       if not contexts:
         print('No contexts found in kubeconfig')
         return False
-      
-      # Use the active context if no parameter was passed for context and there is an active_context
-      if (not context) and active_context:
-        context = active_context['name']
-
+    
       # Is the context (either passed or from active_context) present in the kubeconfig file?
       contexts = [item['name'] for item in contexts]
       if context not in contexts:
@@ -127,6 +122,12 @@ def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_cont
       
       # Inform the user the file has been written
       print(f'PVCs for target-context {target_context} written to target_pvcs.txt')
+
+# Function to retrieve the active context from kube-config
+def retrieve_source_context(kube_config):
+  config.load_kube_config(config_file=kube_config)
+  contexts, active_context = config.list_kube_config_contexts()
+  return active_context['name']
 
 
 # Function to retrieve PVs from both clusters and match them together
@@ -206,12 +207,7 @@ def main(args):
       sys.exit(1)
   # If kube-config was not passed, then let's see if we can retrieve a valid path from $KUBECONFIG
   else:
-    results=retrieve_kubeconfig_env()
-    if results:
-      kube_config = results['kubeconfig']
-      # If source_context was not passed, use the active context retrieved from KUBECONFIG environment variable
-      if not source_context:
-        source_context = results['source_context']
+    kube_config=retrieve_kubeconfig_env()
     if kube_config:
       if is_file_readable(kube_config):
         print(f'Kubeconfig retrieved from KUBECONFIG environment variable: {kube_config}')
@@ -219,6 +215,14 @@ def main(args):
         print(f'Kubeconfig retrieved from KUBECONFIG environment variable, but file is not readable: {kube_config}')
     else:
       print('No kube-config was passed, and no valid config file found in KUBECONFIG environment variable.')
+      sys.exit(1)
+  # If no source-context was passed, let's retrieve it from kube_config
+  if not source_context:
+    source_context = retrieve_source_context(kube_config)
+    if source_context:
+      print(f'Source context retrieved from kube-config: {source_context}')
+    else:
+      print(f'No active context was found in kube-config: {kube_config}')
       sys.exit(1)
   # Now let's find out if kube-config or KUBECONFIG is valid to connect to the source cluster
   if check_context_connectivity(kube_config, source_context):
