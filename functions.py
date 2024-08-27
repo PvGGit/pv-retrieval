@@ -200,6 +200,7 @@ def match_pvs(source_pvs, target_pvs):
 
 # Function to check the validity of a supplied mapping file
 def is_valid_mapping_file(mapping_file):
+  # Does every line in the file match the structure we expect?
   pattern = r'[a-z0-9]([-a-z0-9]*[a-z0-9])?'
   full_pattern = re.compile(rf'^{pattern}:{pattern},{pattern}:{pattern}$')
 
@@ -210,5 +211,20 @@ def is_valid_mapping_file(mapping_file):
         print(f"Error found in line {line_number} in mapping file. Lines should consist of namespace:pvc-name,namespace:pvc-name only. Namespace and PVCs should adhere to Kubernetes naming conventions.")
         return False
   
+  # Now let's check if the PVCs passed in the mapping file actually exist in the cluster
   return True
+
+def test_function(mapping_file):
+  listA = []
+  listB = []
+  with open(mapping_file, 'r') as file:
+    for line in file:
+      line=line.strip()
+      source_pvc, target_pvc = line.split(',')
+      listA.append(source_pvc)
+      listB.append(target_pvc)
+  print('Source PVCs:')
+  print(listA)
+  print('Target PVCs:')
+  print(listB)
               

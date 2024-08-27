@@ -1,6 +1,6 @@
 import argparse
 import sys
-from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,list_pvs,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,match_pvs,is_valid_mapping_file
+from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,list_pvs,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,match_pvs,is_valid_mapping_file, test_function
 
 def main(args):
   kube_config = args.kube_config
@@ -8,6 +8,11 @@ def main(args):
   target_context = args.target_context
   retrieve_pvcs = args.retrieve_pvcs
   mapping_file = args.mapping_file
+  test = args.test
+  # Test functions always take precedence
+  if test:
+    test_function(test)
+    sys.exit(1)
   # If kube-config was passed, let's see if we can access it
   if kube_config:
     if is_file_readable(kube_config):
@@ -92,6 +97,9 @@ if __name__ == "__main__":
   parser.add_argument('--mapping-file',
                       type=str,
                       help='Path to mapping file')
+  parser.add_argument('--test',
+                      type=str,
+                      help='Test function used for development')
 
   args = parser.parse_args()
 
