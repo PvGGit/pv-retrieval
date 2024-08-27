@@ -47,16 +47,17 @@ def main(args):
     else:
       print(f'Target cluster connectivity failed. Please check the context definition in {kube_config}')
       sys.exit(1)
-  # Now that we have both source and target contexts validated, we call upon retrieve_pvs to do its magic.
-  # Commented out for now, development purposes
-  # retrieve_pvs(kube_config, source_context, target_context)
-
+  
   # If retrieve-pvcs was passed, call the retrieve_pvcs function
   if retrieve_pvcs:
     if ( (retrieve_pvcs=='both' or retrieve_pvcs=='target') and (not target_context)):
       print("Can't use options 'both' or 'target' without --target-context set")
     else:
       retrieve_pvcs_from_clusters(kube_config, retrieve_pvcs, source_context, target_context)
+
+  # If no mapping file was provided and we have a target-context, we match PVs based on identical PVCs (name and ns) with source-cluster leading
+  if ((not mapping_file) and (target_context)):
+    retrieve_pvs(kube_config, source_context, target_context)
 
   # If a mapping file was passed, let's process it
   if mapping_file:
@@ -87,7 +88,7 @@ if __name__ == "__main__":
                       help='Define the source context to be used. Does not default to active context')
   parser.add_argument('--retrieve-pvcs',
                       choices = ['source', 'target', 'both'],
-                      help='Retrieve bound PVCs in cluster. Creates pvc_listing_<choice>.txt file in the present working directory')
+                      help='Retrieve bound PVCs in cluster. Creates pvc_listing_<source/target>.txt file in the present working directory')
   parser.add_argument('--mapping-file',
                       type=str,
                       help='Path to mapping file')

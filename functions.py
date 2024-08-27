@@ -142,7 +142,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
       'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
       'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
       'data_dir': item.spec.nfs.path if item.spec.nfs.path else 'not defined'
-      } for item in source_pvs_full.items
+      } for item in source_pvs_full.items if item.status.phase == 'Bound'
     ]
     # Print statement below for debugging purposes
     #print(f'source_pvs is populated with: {source_pvs}')
@@ -154,7 +154,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
       'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
       'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
       'data_dir': item.spec.nfs.path if item.spec.nfs.path else 'not defined'
-      } for item in target_pvs_full.items
+      } for item in target_pvs_full.items if item.status.phase == 'Bound'
       ]
       # Print statement below for debugging purposes
       #print(f'target_pvs is populated with {target_pvs}')
@@ -168,7 +168,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
     print(f'No PersistentVolumes were found in context {source_context}')
     sys.exit(1)
 
-# Function to match the retrieved PVs from source and target cluster
+# Function to match the retrieved PVs from source and target cluster in the situation where PVCs are named identically and in the same namespace (exact copy)
 def match_pvs(source_pvs, target_pvs):
   matched_pvs = []
   # Debugging prints
