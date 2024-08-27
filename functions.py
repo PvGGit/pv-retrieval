@@ -88,7 +88,7 @@ def list_pvs(kube_config, context):
     return False
   
 # Function to retrieve bound PVCs in a cluster
-def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_context):
+def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_context, no_output=False):
     config.load_kube_config(config_file=kube_config)
     # Retrieve the PVs from the source-context
     if (target=='source' or target=='both'):
@@ -98,15 +98,18 @@ def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_cont
       source_volumes = v1.list_persistent_volume()
       # We'll ignore PVs that are not set to Bound
       bound_source_volumes = [source_volume for source_volume in source_volumes.items if source_volume.status.phase=='Bound']
-      # Now let's write namespace:pvc-name into a file for every remaining PV
-      with open('source_pvcs.txt', 'w') as f:
-        f.write(f'PVCs for source-context {source_context}:\n')
-        for volume in bound_source_volumes:
-          f.write(f'{volume.spec.claim_ref.namespace}:{volume.spec.claim_ref.name}\n') 
-      
-      # Inform the user the file has been written
-      print(f'PVCs for source-context {source_context} written to source_pvcs.txt')
-      
+      # Now let's write namespace:pvc-name into a file for every remaining PV if not no_output
+      if not no_output:
+        with open('source_pvcs.txt', 'w') as f:
+          f.write(f'PVCs for source-context {source_context}:\n')
+          for volume in bound_source_volumes:
+            f.write(f'{volume.spec.claim_ref.namespace}:{volume.spec.claim_ref.name}\n') 
+        
+        # Inform the user the file has been written
+        print(f'PVCs for source-context {source_context} written to source_pvcs.txt')
+      # If no_output is True (so when it is called from another function instead of the user, just return the volumes)  
+      else:
+        return bound_source_volumes
     # Retrieve the PVs from the target-context
     if (target=='target' or target=='both'):
       v1 = client.CoreV1Api(
@@ -115,14 +118,18 @@ def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_cont
       target_volumes = v1.list_persistent_volume()
       # We'll ignore PVs that are not set to Bound
       bound_target_volumes = [target_volume for target_volume in target_volumes.items if target_volume.status.phase=='Bound']
-      # Now let's write namespace:pvc-name into a file for every remaining PV
-      with open('target_pvcs.txt', 'w') as f:
-        f.write(f'PVCs for target-context {target_context}:\n')
-        for volume in bound_target_volumes:
-          f.write(f'{volume.spec.claim_ref.namespace}:{volume.spec.claim_ref.name}\n')
-      
-      # Inform the user the file has been written
-      print(f'PVCs for target-context {target_context} written to target_pvcs.txt')
+      # Now let's write namespace:pvc-name into a file for every remaining PV if not no_output
+      if not no_output:
+        with open('target_pvcs.txt', 'w') as f:
+          f.write(f'PVCs for target-context {target_context}:\n')
+          for volume in bound_target_volumes:
+            f.write(f'{volume.spec.claim_ref.namespace}:{volume.spec.claim_ref.name}\n')
+        
+        # Inform the user the file has been written
+        print(f'PVCs for target-context {target_context} written to target_pvcs.txt')
+      # If no_output is True (so when called from another function instead of the user), just return the volumes  
+      else:
+        return bound_target_volumes
 
 # Function to retrieve the active context from kube-config
 def retrieve_source_context(kube_config):
