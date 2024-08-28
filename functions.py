@@ -253,12 +253,19 @@ def is_valid_mapping_file(mapping_file, kube_config, source_context, target_cont
   return True
 
 def retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, target_context):
-  # First we get the PVs from the source cluster. What we do:
-  # - connect to source cluster
-  # - list the PVs and store them
-  # Then we get the PVs from the target cluster
-  # - connect to target cluster
-  # - list the PVs and store them 
+  # List PVs from source cluster 
+  config.load_kube_config(config_file=kube_config)
+  source_v1 = client.CoreV1Api(
+    api_client=config.new_client_from_config(context=source_context)
+  )
+  source_pvs = source_v1.list_persistent_volume()
+  
+  # List PVs from target cluster
+  target_v1 = client.CoreV1Api(
+    api_client=config.new_client_from_config(context=target_context)
+  )
+  target_pvs = target_v1.list_persistent_volume()
+  
   # We then loop through the entries in the mapping file:
   # We get either the NFS datadir or the CephFS volumeHandle from the source PVC in the present line,
   # We then get the NFS datadir or the CephFS volumeHandle from the target PVC in the present line
