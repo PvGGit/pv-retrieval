@@ -260,18 +260,3 @@ def is_valid_mapping_file(mapping_file, kube_config, source_context, target_cont
 
 
   return True
-
-def test_function(mapping_file):
-  listA = []
-  listB = []
-  with open(mapping_file, 'r') as file:
-    for line in file:
-      line=line.strip()
-      source_pvc, target_pvc = line.split(',')
-      listA.append(source_pvc)
-      listB.append(target_pvc)
-  print('Source PVCs:')
-  print(listA)
-  print('Target PVCs:')
-  print(listB)
-              
