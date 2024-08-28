@@ -204,6 +204,7 @@ def match_pvs(source_pvs, target_pvs):
 
 # Function to check the validity of a supplied mapping file
 def is_valid_mapping_file(mapping_file, kube_config, source_context, target_context):
+
   # Does every line in the file match the structure we expect?
   pattern = r'[a-z0-9]([-a-z0-9]*[a-z0-9])?'
   full_pattern = re.compile(rf'^{pattern}:{pattern},{pattern}:{pattern}$')
@@ -251,12 +252,16 @@ def is_valid_mapping_file(mapping_file, kube_config, source_context, target_cont
   # We're all set to go!
   return True
 
-
-
-
-
-
-
-
-
-  return True
+def retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, target_context):
+  # First we get the PVs from the source cluster. What we do:
+  # - connect to source cluster
+  # - list the PVs and store them
+  # Then we get the PVs from the target cluster
+  # - connect to target cluster
+  # - list the PVs and store them 
+  # We then loop through the entries in the mapping file:
+  # We get either the NFS datadir or the CephFS volumeHandle from the source PVC in the present line,
+  # We then get the NFS datadir or the CephFS volumeHandle from the target PVC in the present line
+  # We then print Source PVC: source-pvc - Target PVC - target-pvc
+  # source-datadir/volumeHandle - target-datadir/volumeHandle
+  print('We got \'em')

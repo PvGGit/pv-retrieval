@@ -1,6 +1,6 @@
 import argparse
 import sys
-from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,is_valid_mapping_file
+from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,is_valid_mapping_file,retrieve_dirs_from_mapping_file
 
 def main(args):
   kube_config = args.kube_config
@@ -61,17 +61,22 @@ def main(args):
 
   # If a mapping file was passed, let's process it
   if mapping_file:
-    # Is it readable?
-    if is_file_readable(mapping_file):
-      print(f'Mapping file found to be readable at {mapping_file}')
+    if target_context:
+      # Is it readable?
+      if is_file_readable(mapping_file):
+        print(f'Mapping file found to be readable at {mapping_file}')
+      else:
+        print(f'Mapping was not found or not readable at {mapping_file}')
+        sys.exit(1)
+      # If the file is found and readable, does it match the required structure?
+      if is_valid_mapping_file(mapping_file, kube_config, source_context, target_context):
+        print('Mapping file is valid')
+        # Now that we're sure our mapping file is valid, let's get the datadirs/volumeHandles matched and returned
+        retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, target_context)
+      else:
+        print('Mapping file does not match required structure or contains incorrect PVCs')
     else:
-      print(f'Mapping was not found or not readable at {mapping_file}')
-      sys.exit(1)
-    # If the file is found and readable, does it match the required structure?
-    if is_valid_mapping_file(mapping_file, kube_config, source_context, target_context):
-      print('Mapping file is valid')
-    else:
-      print('Mapping file does not match required structure or contains incorrect PVCs')
+      print('Please provide --target-context to be used with the mapping file')
     
 
 
