@@ -109,6 +109,8 @@ def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_cont
         print(f'PVCs for source-context {source_context} written to source_pvcs.txt')
       # If no_output is True (so when it is called from another function instead of the user, just return the volumes)  
       else:
+        # Let's format the volumes into a shape useful for the mapping-file check
+        bound_source_volumes = [f'{volume.spec.claim_ref.namespace}:{volume.spec.claim_ref.name}' for volume in bound_source_volumes]
         return bound_source_volumes
     # Retrieve the PVs from the target-context
     if (target=='target' or target=='both'):
@@ -129,6 +131,8 @@ def retrieve_pvcs_from_clusters(kube_config, target, source_context, target_cont
         print(f'PVCs for target-context {target_context} written to target_pvcs.txt')
       # If no_output is True (so when called from another function instead of the user), just return the volumes  
       else:
+        # Format volumes to be useful in the mapping file function
+        bound_target_volumes = [f'{volume.spec.claim_ref.namespace}:{volume.spec.claim_ref.name}' for volume in bound_target_volumes]
         return bound_target_volumes
 
 # Function to retrieve the active context from kube-config
@@ -199,7 +203,7 @@ def match_pvs(source_pvs, target_pvs):
     print(f"Data dirs: {item['source_pv']['data_dir']} {item['target_pv']['data_dir']}")
 
 # Function to check the validity of a supplied mapping file
-def is_valid_mapping_file(mapping_file):
+def is_valid_mapping_file(mapping_file, kube_config, source_context, target_context):
   # Does every line in the file match the structure we expect?
   pattern = r'[a-z0-9]([-a-z0-9]*[a-z0-9])?'
   full_pattern = re.compile(rf'^{pattern}:{pattern},{pattern}:{pattern}$')
@@ -212,6 +216,31 @@ def is_valid_mapping_file(mapping_file):
         return False
   
   # Now let's check if the PVCs passed in the mapping file actually exist in the cluster
+  # Let's first split the mapping file into source and target PVCs.
+  mapping_file_source_pvcs = []
+  mapping_file_target_pvcs = []
+  with open(mapping_file, 'r') as file:
+    for line in file:
+      line=line.strip()
+      mapping_file_source_pvc, mapping_file_target_pvc = line.split(',')
+      mapping_file_source_pvcs.append(mapping_file_source_pvc)
+      mapping_file_target_pvcs.append(mapping_file_target_pvc)
+  # Debugging print
+  print(mapping_file_source_pvcs)
+  # print(mapping_file_target_pvcs)
+ 
+  # Now let's retrieve the PVCs using the retrieve_pvcs() function. We pass no_output as True this time to ensure it doesn't overwrite any existing files
+  cluster_source_pvcs = retrieve_pvcs_from_clusters(kube_config, 'source', source_context, target_context, True)
+  print( cluster_source_pvcs)
+
+
+
+
+
+
+
+
+
   return True
 
 def test_function(mapping_file):
