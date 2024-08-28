@@ -76,7 +76,7 @@ def main(args):
     if is_valid_mapping_file(mapping_file, kube_config, source_context, target_context):
       print('Mapping file is valid')
     else:
-      print('Mapping file does not match required structure')
+      print('Mapping file does not match required structure or contains incorrect PVCs')
     
 
 

@@ -226,12 +226,30 @@ def is_valid_mapping_file(mapping_file, kube_config, source_context, target_cont
       mapping_file_source_pvcs.append(mapping_file_source_pvc)
       mapping_file_target_pvcs.append(mapping_file_target_pvc)
   # Debugging print
-  print(mapping_file_source_pvcs)
+  # print(mapping_file_source_pvcs)
   # print(mapping_file_target_pvcs)
  
   # Now let's retrieve the PVCs using the retrieve_pvcs() function. We pass no_output as True this time to ensure it doesn't overwrite any existing files
   cluster_source_pvcs = retrieve_pvcs_from_clusters(kube_config, 'source', source_context, target_context, True)
-  print( cluster_source_pvcs)
+  cluster_target_pvcs = retrieve_pvcs_from_clusters(kube_config, 'target', source_context, target_context, True)
+
+  # Now that we have the PVCs existing in the cluster, let's check the data we were given in the mappingfile.
+  for item in mapping_file_source_pvcs:
+    if item not in cluster_source_pvcs:
+      print(f'Source PVC {item} from mapping file was not found in the source cluster')
+      return False
+    else:
+      print('Source PVCs provided in mapping file found in the source cluster')
+  
+  for item in mapping_file_target_pvcs:
+    if item not in cluster_target_pvcs:
+      print(f'Target PVC {item} was not found in source cluster')
+      return False
+    else:
+      print('Target PVCs provided in mapping file found in the target cluster')
+  
+  # We're all set to go!
+  return True
 
 
 
