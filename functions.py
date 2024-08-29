@@ -4,6 +4,16 @@ from kubernetes import client,config # Needed to interact with the cluster, pip 
 from kubernetes.client.rest import ApiException
 import re
 
+
+# Function to check validity of kube-config file
+def check_kube_config(kube_config):
+  try:
+    config.load_kube_config(config_file=kube_config)
+    contexts = config.list_kube_config_contexts()
+    return True
+  except:
+    return False
+
 # Function to check if filepaths exist and are readable.
 def is_file_readable(file_path):
   # Is it an existing file?

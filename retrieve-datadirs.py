@@ -1,6 +1,6 @@
 import argparse
 import sys
-from functions import is_file_readable,retrieve_kubeconfig_env,check_context_connectivity,retrieve_pvcs_from_clusters,retrieve_source_context,retrieve_pvs,is_valid_mapping_file,retrieve_dirs_from_mapping_file
+from functions import *
 
 def main(args):
   kube_config = args.kube_config
@@ -79,9 +79,35 @@ def main(args):
     else:
       print('Please provide --target-context to be used with the mapping file')
 
-# Interactive function to have the user input and pick the values to be used
+# Interactive function to have the user input and pick the values to be used - just for funsies
 def interactive():
-  print('Interactive time!')
+  # Is there a kubeconfig in the env variables?
+  kube_config = retrieve_kubeconfig_env()
+  if kube_config:
+    prompt = (f'Do you want to use the kube-config found in the environment variables ({kube_config})? [Y/n]: ')
+    user_input = input(prompt).strip().lower()
+    if user_input == 'n':
+      prompt = ('Please enter the path for the kube-config to be used: ')
+      kube_config = input(prompt).strip()
+    
+    # Let's see if it is readable and if it is a kube-config file
+    if is_file_readable(kube_config) and check_kube_config(kube_config):
+      print('Valid kube-config file found')
+    else:
+      print(f'Supplied file either not readable or not a valid kube-config: {kube_config} ')
+      sys.exit(1)
+  else:
+    prompt = ('Please specify a kube-config file to be used: ')
+    kube_config = input(prompt).strip()
+    # Let's see if it is readable and if it is a kube-config file
+    if is_file_readable(kube_config) and check_kube_config(kube_config):
+      print('Valid kube-config file found')
+    else:
+      print(f'Supplied file either not readable or not a valid kube-config: {kube_config} ')
+      sys.exit(1)
+
+
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
