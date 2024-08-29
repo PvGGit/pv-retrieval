@@ -2,6 +2,7 @@ This Python-script allows you to retrieve filepaths for PVs in Kubernetes. In th
 
 Requirements:  
 - The kubernetes Python library must be installed
+- Must be run from a system that can reach source and target cluster
 - Your user must have permission to list persistent volumes in the source and target clusters
 
 Parameters:  
