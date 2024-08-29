@@ -239,15 +239,13 @@ def is_valid_mapping_file(mapping_file, kube_config, source_context, target_cont
     if item not in cluster_source_pvcs:
       print(f'Source PVC {item} from mapping file was not found in the source cluster')
       return False
-    else:
-      print('Source PVCs provided in mapping file found in the source cluster')
+    
   
   for item in mapping_file_target_pvcs:
     if item not in cluster_target_pvcs:
       print(f'Target PVC {item} was not found in source cluster')
       return False
-    else:
-      print('Target PVCs provided in mapping file found in the target cluster')
+    
   
   # We're all set to go!
   return True
