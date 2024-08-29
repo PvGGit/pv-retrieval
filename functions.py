@@ -290,7 +290,7 @@ def retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, t
 
         # Let's output these to the user
         # For now, this is much prettier than the final version will be, but it allows for easy debugging/checking
-        print(f'Matched source PV of type {"NFS" if source_pv.spec.nfs.path else "CephRDB"} for PVC {map_src} with target PV of type {"NFS" if source_pv.spec.nfs.path else "CephRDB"} for PVC {map_target}')
+        print(f'Matched source PV of type {"NFS" if source_pv.spec.nfs else "CephRDB"} for PVC {map_src} with target PV of type {"NFS" if target_pv.spec.nfs else "CephRDB"} for PVC {map_target}')
         print(f'Source {"NFS datadir: " if source_pv.spec.nfs else "Ceph volume: " } {source_pv.spec.nfs.path if source_pv.spec.nfs else source_pv.spec.csi.volume_handle}')
         print(f'Target {"NFS datadir: " if target_pv.spec.nfs else "Ceph volume: " } {target_pv.spec.nfs.path if target_pv.spec.nfs else target_pv.spec.csi.volume_handle}')
           
