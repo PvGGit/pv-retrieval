@@ -1,4 +1,4 @@
-This Python-script allows you to retrieve filepaths for PVs in Kubernetes.  
+This Python-script allows you to retrieve filepaths for PVs in Kubernetes. Requires the kubernetes Python library to be installed.
 
 Parameters:  
 
