@@ -97,9 +97,6 @@ if __name__ == "__main__":
   parser.add_argument('--mapping-file',
                       type=str,
                       help='Path to mapping file')
-  parser.add_argument('--test',
-                      type=str,
-                      help='Test function used for development')
 
   args = parser.parse_args()
 

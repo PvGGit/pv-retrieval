@@ -1,5 +1,4 @@
 import os 
-import argparse
 import sys
 from kubernetes import client,config # Needed to interact with the cluster, pip install kubernetes
 from kubernetes.client.rest import ApiException
