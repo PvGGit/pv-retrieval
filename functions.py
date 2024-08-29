@@ -252,6 +252,13 @@ def is_valid_mapping_file(mapping_file, kube_config, source_context, target_cont
   # We're all set to go!
   return True
 
+# Simple function to select PVs based on properties
+def select_pv_on_pvc(pv_list, ns, pvc_name):
+  for pv in pv_list:
+    if pv.spec.claim_ref.namespace == ns and pv.spec.claim_ref.name == pvc_name:
+      return pv
+
+
 def retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, target_context):
   # List PVs from source cluster 
   config.load_kube_config(config_file=kube_config)
@@ -269,14 +276,25 @@ def retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, t
   target_pvs = [item for item in target_pvs.items if item.status.phase == 'Bound']
 
   if source_pvs and target_pvs:
-    print('The magic starts here')
+    with open(mapping_file, 'r') as file:
+      for line in file:
+        line = line.strip()
+        # Get the right PV from the source_pvs based on first column in mapping file
+        map_src = line.split(',')[0]
+        map_src_ns, map_src_name = map_src.split(':')
+        source_pv = select_pv_on_pvc(source_pvs, map_src_ns, map_src_name)
+        # Get the right PV from the target_pvs based on the second column in mapping file
+        map_target = line.split(',')[1]
+        map_target_ns, map_target_name = map_target.split(':')
+        target_pv = select_pv_on_pvc(target_pvs, map_target_ns, map_target_name)
+
+        # Let's output these to the user
+        # For now, this is much prettier than the final version will be, but it allows for easy debugging/checking
+        print(f'Matched source PV of type {"NFS" if source_pv.spec.nfs else "CephRDB"} for PVC {map_src} with target PV of type {"NFS" if source_pv.spec.nfs else "CephRDB"} for PVC {map_target}')
+        print(f'Source {"NFS datadir: " if source_pv.spec.nfs else "Ceph volume: " } {source_pv.spec.nfs.path if source_pv.spec.nfs else source_pv.spec.csi.volume_handle}')
+        print(f'Target {"NFS datadir: " if target_pv.spec.nfs else "Ceph volume: " } {target_pv.spec.nfs.path if target_pv.spec.nfs else target_pv.spec.csi.volume_handle}')
+          
+
   else:
     print('No bound PVs found in source or target cluster')
-  
-  # We then loop through the entries in the mapping file:
-  # We get either the NFS datadir or the CephFS volumeHandle from the source PVC in the present line,
-  # We then get the NFS datadir or the CephFS volumeHandle from the target PVC in the present line
-  # We then print Source PVC: source-pvc - Target PVC - target-pvc
-  # source-datadir/volumeHandle - target-datadir/volumeHandle
-  print('We got \'em')
   return True
