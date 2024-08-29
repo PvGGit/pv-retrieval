@@ -36,7 +36,7 @@ def retrieve_kubeconfig_env():
 
 # Function to check cluster connectivity. For now, we'll assume that being able to retrieve all namespaces is sufficient.
 def check_context_connectivity(kube_config, context):
-  try:
+  
       # Get config loaded up and extract contexts and active_context from the config
       config.load_kube_config(config_file=kube_config)
       contexts, active_context = config.list_kube_config_contexts()
@@ -52,26 +52,19 @@ def check_context_connectivity(kube_config, context):
         print(f'The context {context} was not found in the kubeconfig file')
         return False
       
-      # If the passed context is present, try to list namespaces
+      # If the passed context is present, try to list persistentvolumes
       else:
         v1 = client.CoreV1Api(
           api_client=config.new_client_from_config(context=context)
         )
-        namespaces = v1.list_namespace()
-        if namespaces:
-          print('Cluster connectivity is alright!')
+        # Try to get the persistent volumes
+        try: 
+          pvs = v1.list_persistent_volume()
           return True
-        else:
-          print(f'No namespaces found in context {context}')
+        except: 
+          print(f'Error connecting to context {context}. Make sure your user has the permission to list persistent volumes.')
           return False
-        
-  # Handle exceptions      
-  except ApiException as e:
-    print(f'Error when connecting to cluster: {e}')
-    return False
-  except Exception as e:
-    print(f'An unexpected error occurred: {e}')
-    return False
+
 
 # Function to list existing PersistentVolumes from a cluster
 def list_pvs(kube_config, context):
