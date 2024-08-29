@@ -152,7 +152,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
       {'name': item.metadata.name if item.metadata.name else 'not defined',
       'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
       'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
-      'data_dir': item.spec.nfs.path if item.spec.nfs.path else item.spec.csi.volume_handle
+      'data_dir': item.spec.nfs.path if item.spec.nfs else item.spec.csi.volume_handle
       } for item in source_pvs_full.items if item.status.phase == 'Bound'
     ]
     # Print statement below for debugging purposes
@@ -164,7 +164,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
       {'name': item.metadata.name if item.metadata.name else 'not defined',
       'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
       'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
-      'data_dir': item.spec.nfs.path if item.spec.nfs.path else item.spec.csi.volume_handle
+      'data_dir': item.spec.nfs.path if item.spec.nfs else item.spec.csi.volume_handle
       } for item in target_pvs_full.items if item.status.phase == 'Bound'
       ]
       # Print statement below for debugging purposes
