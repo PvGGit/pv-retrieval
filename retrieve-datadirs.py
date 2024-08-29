@@ -59,6 +59,7 @@ def main(args):
   # If no mapping file was provided and we have a target-context, we match PVs based on identical PVCs (name and ns) with source-cluster leading
   if ((not mapping_file) and (target_context)):
     retrieve_pvs(kube_config, source_context, target_context)
+    print('retrieve_pvs was called')
 
   # If a mapping file was passed, let's process it
   if mapping_file:
