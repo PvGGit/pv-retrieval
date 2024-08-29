@@ -152,7 +152,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
       {'name': item.metadata.name if item.metadata.name else 'not defined',
       'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
       'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
-      'data_dir': item.spec.nfs.path if item.spec.nfs.path else 'not defined'
+      'data_dir': item.spec.nfs.path if item.spec.nfs.path else item.spec.csi.volume_handle
       } for item in source_pvs_full.items if item.status.phase == 'Bound'
     ]
     # Print statement below for debugging purposes
@@ -164,7 +164,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
       {'name': item.metadata.name if item.metadata.name else 'not defined',
       'pvc_name': item.spec.claim_ref.name if item.spec.claim_ref.name else 'not defined',
       'pvc_ns': item.spec.claim_ref.namespace if item.spec.claim_ref.namespace else 'not defined',
-      'data_dir': item.spec.nfs.path if item.spec.nfs.path else 'not defined'
+      'data_dir': item.spec.nfs.path if item.spec.nfs.path else item.spec.csi.volume_handle
       } for item in target_pvs_full.items if item.status.phase == 'Bound'
       ]
       # Print statement below for debugging purposes
@@ -259,12 +259,19 @@ def retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, t
     api_client=config.new_client_from_config(context=source_context)
   )
   source_pvs = source_v1.list_persistent_volume()
+  source_pvs = [item for item in source_pvs.items if item.status.phase == 'Bound']
   
   # List PVs from target cluster
   target_v1 = client.CoreV1Api(
     api_client=config.new_client_from_config(context=target_context)
   )
   target_pvs = target_v1.list_persistent_volume()
+  target_pvs = [item for item in target_pvs.items if item.status.phase == 'Bound']
+
+  if source_pvs and target_pvs:
+    print('The magic starts here')
+  else:
+    print('No bound PVs found in source or target cluster')
   
   # We then loop through the entries in the mapping file:
   # We get either the NFS datadir or the CephFS volumeHandle from the source PVC in the present line,
@@ -272,3 +279,4 @@ def retrieve_dirs_from_mapping_file(mapping_file, kube_config, source_context, t
   # We then print Source PVC: source-pvc - Target PVC - target-pvc
   # source-datadir/volumeHandle - target-datadir/volumeHandle
   print('We got \'em')
+  return True
