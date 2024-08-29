@@ -8,6 +8,7 @@ def main(args):
   target_context = args.target_context
   retrieve_pvcs = args.retrieve_pvcs
   mapping_file = args.mapping_file
+ 
   # If kube-config was passed, let's see if we can access it
   if kube_config:
     if is_file_readable(kube_config):
@@ -97,7 +98,7 @@ if __name__ == "__main__":
   parser.add_argument('--mapping-file',
                       type=str,
                       help='Path to mapping file')
-
+  
   args = parser.parse_args()
 
   
