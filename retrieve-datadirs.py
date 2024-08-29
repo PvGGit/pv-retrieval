@@ -78,8 +78,10 @@ def main(args):
         print('Mapping file does not match required structure or contains incorrect PVCs')
     else:
       print('Please provide --target-context to be used with the mapping file')
-    
 
+# Interactive function to have the user input and pick the values to be used
+def interactive():
+  print('Interactive time!')
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
@@ -101,6 +103,9 @@ if __name__ == "__main__":
   
   args = parser.parse_args()
 
-  
-
+ # If no arguments are passed, we enter interactive mode
+if all(value is None for value in vars(args).values()):
+  interactive()
+else:
   main(args)
+
