@@ -196,10 +196,13 @@ def match_pvs(source_pvs, target_pvs):
           'source_pv' : source_item,
           'target_pv' : matching_target_item  
         })
-  # Print statement for debugging purposes
-  for item in matched_pvs:
-    print(f"Source PV called {item['source_pv']['name']} matches with target PV called {item['target_pv']['name']}")
-    print(f"Data dirs: {item['source_pv']['data_dir']} {item['target_pv']['data_dir']}")
+  if matched_pvs:
+    # Print statement for debugging purposes
+    for item in matched_pvs:
+      print(f"Source PV called {item['source_pv']['name']} matches with target PV called {item['target_pv']['name']}")
+      print(f"Data dirs: {item['source_pv']['data_dir']} {item['target_pv']['data_dir']}")
+  else:
+    print('PVCs in source and target cluster are not identical. Please supply a mapping file using the --mapping-file parameter instead.')
 
 # Function to check the validity of a supplied mapping file
 def is_valid_mapping_file(mapping_file, kube_config, source_context, target_context):
