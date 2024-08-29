@@ -1,4 +1,4 @@
-This Python-script allows you to retrieve filepaths for PVs in Kubernetes. In the present version, it will retrieve NFS paths and CephRDB volumes (if set through CSI)
+This Python-script allows you to retrieve filepaths for PVs in Kubernetes. In the present version, it will retrieve NFS paths and CephRDB volumes (if set through CSI). This can help when migrating applications between two clusters.
 
 Requirements:  
 - The kubernetes Python library must be installed
