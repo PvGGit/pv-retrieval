@@ -1,5 +1,7 @@
 import argparse
 import sys
+from kubernetes import client,config
+import inquirer
 from functions import *
 
 def main(args):
@@ -105,6 +107,21 @@ def interactive():
     else:
       print(f'Supplied file either not readable or not a valid kube-config: {kube_config} ')
       sys.exit(1)
+  # Now we need to have the user choose a source-context (defaulting to the active context)
+  config.load_kube_config(config_file=kube_config)
+  contexts, active_context = config.list_kube_config_contexts()
+  contexts = [context['name'] for context in contexts]
+  options = [
+    inquirer.List(
+      'source_context',
+      message = 'Please select the source-context to use',
+      choices = contexts,
+    ),
+  ]
+
+  source_context = inquirer.prompt(options)
+
+  
 
 
 
