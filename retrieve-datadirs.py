@@ -111,15 +111,24 @@ def interactive():
   config.load_kube_config(config_file=kube_config)
   contexts, active_context = config.list_kube_config_contexts()
   contexts = [context['name'] for context in contexts]
-  options = [
+  source_context_options = [
     inquirer.List(
       'source_context',
       message = 'Please select the source-context to use',
-      choices = contexts,
-    ),
+      choices = contexts
+    )
   ]
+  source_context = inquirer.prompt(source_context_options)
+  # Now we have the user select the target-context, which can be the same as the source-context
+  target_context_options = [
+    inquirer.List(
+      'target-context',
+      message = 'Please select the target-context to use',
+      choices = contexts
+    )
+  ]
+  target_context = inquirer.prompt(target_context_options)
 
-  source_context = inquirer.prompt(options)
 
   
 
