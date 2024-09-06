@@ -15,7 +15,7 @@ def retrieve_kubeconfig_env() -> str:
     except KeyError:
         raise RuntimeError('No KUBECONFIG found in environment variables')
 
-# Function to check cluster connectivity. For now, we'll assume that being able to retrieve all namespaces is sufficient.
+# Function to check cluster connectivity. Listing persistent volumes is required for this script to work.
 def check_context_connectivity(kube_config, context):
 
     # Get config loaded up and extract contexts and active_context from the config
@@ -33,7 +33,7 @@ def check_context_connectivity(kube_config, context):
         print(f'The context {context} was not found in the kubeconfig file')
         return False
 
-    # If the passed context is present, try to list persistentvolumes
+    # If the passed context is present, try to list persistentvolumes.
     else:
         v1 = client.CoreV1Api(api_client=config.new_client_from_config(context=context))
         # Try to get the persistent volumes
