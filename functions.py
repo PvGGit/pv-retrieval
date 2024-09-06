@@ -8,38 +8,12 @@ from kubernetes.client.rest import ApiException
 import re
 
 
-# Function to check if filepaths exist and are readable.
-def is_file_readable(file_path):
-    # Try opening the file
-    try:
-        with open(file_path, 'r'):
-            return True
-    except FileNotFoundError:
-        print(f'File not found: {file_path}')
-        return False
-    except PermissionError:
-        print(f'No permissions to open file: {file_path}')
-        return False
-    except Exception:
-        print('An exception occurred trying to open file: {file_path}')
-        return False
-
 # Function to retrieve KUBECONFIG from the environment variables if present
-def retrieve_kubeconfig_env():
-    if 'KUBECONFIG' in os.environ:
-        kubeconfig = os.environ.get('KUBECONFIG')
-        print(f'KUBECONFIG was found in environment variables: {kubeconfig}')
-        # Is the file readable? If so, return it to its caller
-        if is_file_readable(kubeconfig):
-            config.load_kube_config(config_file=kubeconfig)
-            contexts, active_context = config.list_kube_config_contexts()
-            return kubeconfig
-        else:
-            return False
-    else:
-        print('No KUBECONFIG found in environment variables')
-        return False
-
+def retrieve_kubeconfig_env() -> str:
+    try:
+        return os.environ['KUBECONFIG']
+    except KeyError:
+        raise RuntimeError('No KUBECONFIG found in environment variables')
 
 # Function to check cluster connectivity. For now, we'll assume that being able to retrieve all namespaces is sufficient.
 def check_context_connectivity(kube_config, context):

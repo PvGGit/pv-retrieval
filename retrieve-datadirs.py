@@ -10,30 +10,10 @@ def main(args):
     retrieve_pvcs = args.retrieve_pvcs
     mapping_file = args.mapping_file
 
-    # If kube-config was passed, let's see if we can access it
-    if kube_config:
-        if is_file_readable(kube_config):
-            print('Kube config passed and found to be a readable file')
-        else:
-            print('Please provide a valid path when using --kube-config')
-            sys.exit(1)
-    # If kube-config was not passed, then let's see if we can retrieve a valid path from $KUBECONFIG
-    else:
+    # Retrieve kube-config from environment if it was not passed
+    if not kube_config:
         kube_config = retrieve_kubeconfig_env()
-        if kube_config:
-            if is_file_readable(kube_config):
-                print(
-                    f'Kubeconfig retrieved from KUBECONFIG environment variable: {kube_config}'
-                )
-            else:
-                print(
-                    f'Kubeconfig retrieved from KUBECONFIG environment variable, but file is not readable: {kube_config}'
-                )
-        else:
-            print(
-                'No kube-config was passed, and no valid config file found in KUBECONFIG environment variable.'
-            )
-            sys.exit(1)
+
     # If no source-context was passed, let's retrieve it from kube_config
     if not source_context:
         source_context = retrieve_source_context(kube_config)
@@ -78,13 +58,6 @@ def main(args):
     # If a mapping file was passed, let's process it
     if mapping_file:
         if target_context:
-            # Is it readable?
-            if is_file_readable(mapping_file):
-                print(f'Mapping file found to be readable at {mapping_file}')
-            else:
-                print(f'Mapping was not found or not readable at {mapping_file}')
-                sys.exit(1)
-            # If the file is found and readable, does it match the required structure?
             if is_valid_mapping_file(
                 mapping_file, kube_config, source_context, target_context
             ):
@@ -127,4 +100,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args)
+    try:
+        main(args)
+    except Exception as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)

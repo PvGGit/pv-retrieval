@@ -5,3 +5,5 @@ source_pvcs.txt
 target_pvcs.txt
 # Ignore pycache library
 __pycache__
+# Ignore mypy type errors
+mypy.ini
