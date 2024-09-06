@@ -10,18 +10,19 @@ import re
 
 # Function to check if filepaths exist and are readable.
 def is_file_readable(file_path):
-    # Is it an existing file?
-    if os.path.isfile(file_path):
-        # Can we read the file?
-        if os.access(file_path, os.R_OK):
+    # Try opening the file
+    try:
+        with open(file_path, 'r'):
             return True
-        else:
-            print(f'File exists but is not readable: {file_path}')
-            return False
-    else:
-        print(f'File does not exist or is not a file: {file_path}')
+    except FileNotFoundError:
+        print(f'File not found: {file_path}')
         return False
-
+    except PermissionError:
+        print(f'No permissions to open file: {file_path}')
+        return False
+    except Exception:
+        print('An exception occurred trying to open file: {file_path}')
+        return False
 
 # Function to retrieve KUBECONFIG from the environment variables if present
 def retrieve_kubeconfig_env():
