@@ -129,6 +129,9 @@ def interactive():
   ]
   target_context = inquirer.prompt(target_context_options)
 
+  # Now that we have both contexts, let's present the user with the options available to them
+  
+
 
   
 
