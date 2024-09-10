@@ -12,13 +12,17 @@ def retrieve_kubeconfig_env() -> str:
     try:
         return os.environ['KUBECONFIG']
     except KeyError:
-        raise RuntimeError('No KUBECONFIG found in environment variables, please specify a valid kube-config file')
+        raise RuntimeError(
+            'No KUBECONFIG found in environment variables, please specify a valid kube-config file'
+        )
+
 
 # Function to list existing PersistentVolumes from a cluster
 def list_pvs(kube_config, context):
     config.load_kube_config(config_file=kube_config)
     v1 = client.CoreV1Api(api_client=config.new_client_from_config(context=context))
     return v1.list_persistent_volume()
+
 
 # Function to retrieve bound PVCs in a cluster
 def retrieve_pvcs_from_clusters(
@@ -99,6 +103,7 @@ def retrieve_source_context(kube_config):
     _, active_context = config.list_kube_config_contexts()
     return active_context['name']
 
+
 # Function to retrieve PVs from both clusters and match them together
 def retrieve_pvs(kube_config, source_context, target_context):
     source_pvs_full = list_pvs(kube_config, source_context)
@@ -155,9 +160,13 @@ def retrieve_pvs(kube_config, source_context, target_context):
             # Now that we have both dicts populated, it's time to match them
             match_pvs(source_pvs, target_pvs)
         else:
-            raise RuntimeError(f'No PersistentVolumes were found in context {target_context}')
+            raise RuntimeError(
+                f'No PersistentVolumes were found in context {target_context}'
+            )
     else:
-        raise RuntimeError(f'No PersistentVolumes were found in context {source_context}')
+        raise RuntimeError(
+            f'No PersistentVolumes were found in context {source_context}'
+        )
 
 
 # Function to match the retrieved PVs from source and target cluster in the situation where PVCs are named identically and in the same namespace (exact copy)
@@ -196,11 +205,13 @@ def match_pvs(source_pvs, target_pvs):
             'PVCs in source and target cluster are not identical. Please supply a mapping file using the --mapping-file parameter instead.'
         )
 
+
 # Simple function to select PVs based on properties
 def select_pv_on_pvc(pv_list, ns, pvc_name):
     for pv in pv_list:
         if pv.spec.claim_ref.namespace == ns and pv.spec.claim_ref.name == pvc_name:
             return pv
+
 
 def retrieve_dirs_from_mapping_file(
     mapping_file, kube_config, source_context, target_context
