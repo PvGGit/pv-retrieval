@@ -107,28 +107,39 @@ def retrieve_pvcs_from_clusters(
     if target == 'source' or target == 'both':
         bound_source_volumes = get_bound_pvcs(kube_config, source_context)
         # Now let's write namespace:pvc-name into a file for every remaining PV if not no_output
-        with open('source_pvcs.txt', 'w') as f:
-            f.write(f'PVCs for source-context {source_context}:\n')
-            for item in bound_source_volumes:
-                f.write(f'{item}\n')
-        # Inform the user the file has been written
+        write_file(bound_source_volumes, 'source_pvcs.txt')
         print(
             f'PVCs for source-context {source_context} written to source_pvcs.txt'
         )
     # Retrieve the PVs from the target-context
     if target == 'target' or target == 'both':
         bound_target_volumes = get_bound_pvcs(kube_config, target_context)
-        # Now let's write namespace:pvc-name into a file for every remaining PV if not no_output
-        with open('target_pvcs.txt', 'w') as f:
-            f.write(f'PVCs for target-context {target_context}:\n')
-            for item in bound_target_volumes:
-                f.write(f'{item}\n')
+        write_file(bound_target_volumes, 'target_pvcs.txt')
         # Inform the user the file has been written
         print(
             f'PVCs for target-context {target_context} written to target_pvcs.txt'
         )
     return None
 
+def write_file(volumes: list, file: str) -> None:
+   """
+    Writes a list of volumes to a specified file, with each volume on a new line.
+
+    This function opens the specified file in write mode and writes each item from the `volumes` list
+    to the file. Each item is written on a separate line.
+
+    Args:
+        volumes (list): A list of items (volumes) to be written to the file.
+        file (str): The path to the file where the volumes will be written.
+
+    Returns:
+        None: The function returns None after writing all items to the file.
+    """
+   with open(file, 'w') as f:
+       for item in volumes:
+           f.write(f'{item}\n')
+
+   return None
 
 # Function to retrieve the active context from kube-config
 def retrieve_source_context(kube_config: str) -> str:
@@ -195,17 +206,15 @@ def extract_values_from_pvs(pv_list: V1PersistentVolumeList) -> list:
 def retrieve_pvs(kube_config: str, source_context: str, target_context: str) -> None:
     """
     Retrieves and processes Persistent Volumes (PVs) from source and target Kubernetes contexts,
-    and matches them based on relevant criteria.
+    extracts relevant details, and matches them based on PVC name and namespace.
 
     This function first retrieves the Persistent Volumes (PVs) from the source Kubernetes context and extracts
-    only those that are in the 'Bound' state. For each PV, the function extracts the name, associated PVC name,
-    namespace, and data directory.
+    the relevant details (name, associated PVC name, namespace, and data directory) from PVs that are in the
+    'Bound' state. It then performs the same process for the target Kubernetes context.
 
-    The same process is then applied to the target Kubernetes context, provided that PVs were successfully retrieved
-    from the source context. Once both source and target PVs have been processed, the function calls `match_pvs` to
-    perform the matching between the two sets of PVs.
-
-    If no PVs are found in either the source or target context, a `RuntimeError` is raised.
+    Once the details from both the source and target PVs are extracted, the function calls `match_pvs` to
+    match the PVs between the two contexts based on PVC name and namespace. If no PVs are found in either
+    the source or target context, a `RuntimeError` is raised.
 
     Args:
         kube_config (str): Path to the kubeconfig file used to load the Kubernetes configuration.
