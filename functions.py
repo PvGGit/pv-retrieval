@@ -20,7 +20,7 @@ def retrieve_kubeconfig_env() -> str:
 
 
 # Function to list existing PersistentVolumes from a cluster
-def list_pvs(kube_config: str, context: str)-> V1PersistentVolumeList:
+def list_pvs(kube_config: str, context: str) -> V1PersistentVolumeList:
     config.load_kube_config(config_file=kube_config)
     v1 = client.CoreV1Api(api_client=config.new_client_from_config(context=context))
     return v1.list_persistent_volume()
@@ -28,7 +28,11 @@ def list_pvs(kube_config: str, context: str)-> V1PersistentVolumeList:
 
 # Function to retrieve bound PVCs in a cluster
 def retrieve_pvcs_from_clusters(
-    kube_config: str, target: str, source_context: str, target_context: str, no_output: bool = False
+    kube_config: str,
+    target: str,
+    source_context: str,
+    target_context: str,
+    no_output: bool = False,
 ) -> Union[None, List[str]]:
     config.load_kube_config(config_file=kube_config)
     # Retrieve the PVs from the source-context
@@ -209,7 +213,9 @@ def match_pvs(source_pvs: list, target_pvs: list) -> None:
 
 
 # Simple function to select PVs based on properties
-def select_pv_on_pvc(pv_list: list, ns: str, pvc_name: str) -> Optional[V1PersistentVolume]:
+def select_pv_on_pvc(
+    pv_list: list, ns: str, pvc_name: str
+) -> Optional[V1PersistentVolume]:
     for pv in pv_list:
         if pv.spec.claim_ref.namespace == ns and pv.spec.claim_ref.name == pvc_name:
             return pv
