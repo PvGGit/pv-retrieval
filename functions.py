@@ -2,7 +2,7 @@ import os
 from kubernetes import (
     client,
     config,
-)  # Needed to interact with the cluster, pip install kubernetes
+)  # type: ignore
 import re
 from typing import Union, List, Optional
 
