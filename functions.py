@@ -149,6 +149,47 @@ def retrieve_source_context(kube_config: str) -> str:
     _, active_context = config.list_kube_config_contexts()
     return active_context['name']
 
+def extract_values_from_pvs(pv_list: V1PersistentVolumeList) -> list:
+    """
+    Extracts relevant information from a list of Persistent Volumes (PVs) and returns it in a structured format.
+
+    This function iterates over a list of Persistent Volumes (PVs) and extracts key details, including the
+    name of the PV, the associated PVC name and namespace, and the data directory (either NFS path or Ceph volume handle).
+    Only PVs in the 'Bound' state are processed. The extracted data is returned as a list of dictionaries,
+    where each dictionary contains the extracted information for a single PV.
+
+    Args:
+        pv_list (V1PersistentVolumeList): A list of `V1PersistentVolume` objects representing Persistent Volumes from
+                                          a Kubernetes cluster.
+
+    Returns:
+        list: A list of dictionaries where each dictionary contains the following keys:
+              - 'name': The name of the Persistent Volume (PV).
+              - 'pvc_name': The name of the Persistent Volume Claim (PVC) associated with the PV.
+              - 'pvc_ns': The namespace of the PVC.
+              - 'data_dir': The NFS path or Ceph volume handle associated with the PV.
+    """
+    pvs = [
+            {
+                'name': item.metadata.name if item.metadata.name else 'not defined',
+                'pvc_name': (
+                    item.spec.claim_ref.name
+                    if item.spec.claim_ref.name
+                    else 'not defined'
+                ),
+                'pvc_ns': (
+                    item.spec.claim_ref.namespace
+                    if item.spec.claim_ref.namespace
+                    else 'not defined'
+                ),
+                'data_dir': (
+                    item.spec.nfs.path if item.spec.nfs else item.spec.csi.volume_handle
+                ),
+            }
+            for item in pvs.items
+            if item.status.phase == 'Bound'
+        ]
+    return pvs
 
 # Function to retrieve PVs from both clusters and match them together
 def retrieve_pvs(kube_config: str, source_context: str, target_context: str) -> None:
@@ -180,63 +221,20 @@ def retrieve_pvs(kube_config: str, source_context: str, target_context: str) -> 
     source_pvs_full = list_pvs(kube_config, source_context)
     # If PVs were returned for source-context, we continue on to the target context
     if source_pvs_full:
-        # Let's extract just the values we need for our purposes
-        source_pvs = [
-            {
-                'name': item.metadata.name if item.metadata.name else 'not defined',
-                'pvc_name': (
-                    item.spec.claim_ref.name
-                    if item.spec.claim_ref.name
-                    else 'not defined'
-                ),
-                'pvc_ns': (
-                    item.spec.claim_ref.namespace
-                    if item.spec.claim_ref.namespace
-                    else 'not defined'
-                ),
-                'data_dir': (
-                    item.spec.nfs.path if item.spec.nfs else item.spec.csi.volume_handle
-                ),
-            }
-            for item in source_pvs_full.items
-            if item.status.phase == 'Bound'
-        ]
-
+        source_pvs = extract_values_from_pvs(source_pvs_full)
         target_pvs_full = list_pvs(kube_config, target_context)
         # If PVs were returned for target-context, we call the matching function
         if target_pvs_full:
-            target_pvs = [
-                {
-                    'name': item.metadata.name if item.metadata.name else 'not defined',
-                    'pvc_name': (
-                        item.spec.claim_ref.name
-                        if item.spec.claim_ref.name
-                        else 'not defined'
-                    ),
-                    'pvc_ns': (
-                        item.spec.claim_ref.namespace
-                        if item.spec.claim_ref.namespace
-                        else 'not defined'
-                    ),
-                    'data_dir': (
-                        item.spec.nfs.path
-                        if item.spec.nfs
-                        else item.spec.csi.volume_handle
-                    ),
-                }
-                for item in target_pvs_full.items
-                if item.status.phase == 'Bound'
-            ]
-
+            target_pvs = extract_values_from_pvs(target_pvs_full)
             # Now that we have both dicts populated, it's time to match them
             match_pvs(source_pvs, target_pvs)
         else:
             raise RuntimeError(
-                f'No PersistentVolumes were found in context {target_context}'
+                f'No PersistentVolumes were found in target context {target_context}'
             )
     else:
         raise RuntimeError(
-            f'No PersistentVolumes were found in context {source_context}'
+            f'No PersistentVolumes were found in source context {source_context}'
         )
 
 
