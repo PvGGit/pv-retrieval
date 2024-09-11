@@ -101,7 +101,7 @@ def retrieve_pvcs_from_clusters(
                 for volume in bound_target_volumes
             ]
             return bound_target_volumes
-        return None
+    return None
 
 
 # Function to retrieve the active context from kube-config
