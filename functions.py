@@ -1,11 +1,13 @@
 import os
-import sys
 from kubernetes import (
     client,
     config,
 )  # Needed to interact with the cluster, pip install kubernetes
-from kubernetes.client.rest import ApiException
 import re
+from typing import Union, List, Optional
+
+# Imports for type hinting purposes
+from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
 
 # Function to retrieve KUBECONFIG from the environment variables if present
 def retrieve_kubeconfig_env() -> str:
@@ -15,15 +17,15 @@ def retrieve_kubeconfig_env() -> str:
         raise RuntimeError('No KUBECONFIG found in environment variables, please specify a valid kube-config file')
 
 # Function to list existing PersistentVolumes from a cluster
-def list_pvs(kube_config, context):
+def list_pvs(kube_config: str, context: str)-> V1PersistentVolumeList:
     config.load_kube_config(config_file=kube_config)
     v1 = client.CoreV1Api(api_client=config.new_client_from_config(context=context))
     return v1.list_persistent_volume()
 
 # Function to retrieve bound PVCs in a cluster
 def retrieve_pvcs_from_clusters(
-    kube_config, target, source_context, target_context, no_output=False
-):
+    kube_config: str, target: str, source_context: str, target_context: str, no_output: bool = False
+) -> Union[None, List[str]]:
     config.load_kube_config(config_file=kube_config)
     # Retrieve the PVs from the source-context
     if target == 'source' or target == 'both':
@@ -94,13 +96,13 @@ def retrieve_pvcs_from_clusters(
 
 
 # Function to retrieve the active context from kube-config
-def retrieve_source_context(kube_config):
+def retrieve_source_context(kube_config: str) -> str:
     config.load_kube_config(config_file=kube_config)
     _, active_context = config.list_kube_config_contexts()
     return active_context['name']
 
 # Function to retrieve PVs from both clusters and match them together
-def retrieve_pvs(kube_config, source_context, target_context):
+def retrieve_pvs(kube_config: str, source_context: str, target_context: str) -> None:
     source_pvs_full = list_pvs(kube_config, source_context)
     # If PVs were returned for source-context, we continue on to the target context
     if source_pvs_full:
@@ -161,7 +163,7 @@ def retrieve_pvs(kube_config, source_context, target_context):
 
 
 # Function to match the retrieved PVs from source and target cluster in the situation where PVCs are named identically and in the same namespace (exact copy)
-def match_pvs(source_pvs, target_pvs):
+def match_pvs(source_pvs: list, target_pvs: list) -> None:
     matched_pvs = []
 
     # Loop through the source_pvs list and match pvc_name and pvc_ns onto target_pvs
@@ -197,14 +199,14 @@ def match_pvs(source_pvs, target_pvs):
         )
 
 # Simple function to select PVs based on properties
-def select_pv_on_pvc(pv_list, ns, pvc_name):
+def select_pv_on_pvc(pv_list: list, ns: str, pvc_name: str) -> Optional[V1PersistentVolume]:
     for pv in pv_list:
         if pv.spec.claim_ref.namespace == ns and pv.spec.claim_ref.name == pvc_name:
             return pv
 
 def retrieve_dirs_from_mapping_file(
-    mapping_file, kube_config, source_context, target_context
-):
+    mapping_file: str, kube_config: str, source_context: str, target_context: str
+) -> None:
     # Do entries in the mapping file conform to the expected pattern?
     pattern = r'[a-z0-9]([-a-z0-9]*[a-z0-9])?'
     full_pattern = re.compile(rf'^{pattern}:{pattern},{pattern}:{pattern}$')
