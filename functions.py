@@ -22,6 +22,18 @@ def list_pvs(kube_config: str, context: str) -> V1PersistentVolumeList:
     v1 = client.CoreV1Api(api_client=config.new_client_from_config(context=context))
     return v1.list_persistent_volume()
 
+def get_bound_pvcs(kube_config: str, context: str) -> V1PersistentVolumeList:
+    config.load_kube_config(config_file=kube_config)
+    v1 = client.CoreV1Api(
+        api_client=config.new_client_from_config(context=context)
+    )
+    volumes = v1.list_persistent_volume()
+    bound_volumes = [
+        volume
+        for volume in volumes.items
+        if volume.status.phase == 'Bound'
+    ]
+    return bound_volumes
 
 # Function to retrieve bound PVCs in a cluster
 def retrieve_pvcs_from_clusters(
@@ -34,16 +46,7 @@ def retrieve_pvcs_from_clusters(
     config.load_kube_config(config_file=kube_config)
     # Retrieve the PVs from the source-context
     if target == 'source' or target == 'both':
-        v1 = client.CoreV1Api(
-            api_client=config.new_client_from_config(context=source_context)
-        )
-        source_volumes = v1.list_persistent_volume()
-        # We'll ignore PVs that are not set to Bound
-        bound_source_volumes = [
-            source_volume
-            for source_volume in source_volumes.items
-            if source_volume.status.phase == 'Bound'
-        ]
+        bound_source_volumes = get_bound_pvcs(kube_config, source_context)
         # Now let's write namespace:pvc-name into a file for every remaining PV if not no_output
         if not no_output:
             with open('source_pvcs.txt', 'w') as f:
@@ -52,7 +55,6 @@ def retrieve_pvcs_from_clusters(
                     f.write(
                         f'{volume.spec.claim_ref.namespace}:{volume.spec.claim_ref.name}\n'
                     )
-
             # Inform the user the file has been written
             print(
                 f'PVCs for source-context {source_context} written to source_pvcs.txt'
@@ -67,16 +69,7 @@ def retrieve_pvcs_from_clusters(
             return bound_source_volumes
     # Retrieve the PVs from the target-context
     if target == 'target' or target == 'both':
-        v1 = client.CoreV1Api(
-            api_client=config.new_client_from_config(context=target_context)
-        )
-        target_volumes = v1.list_persistent_volume()
-        # We'll ignore PVs that are not set to Bound
-        bound_target_volumes = [
-            target_volume
-            for target_volume in target_volumes.items
-            if target_volume.status.phase == 'Bound'
-        ]
+        bound_target_volumes = get_bound_pvcs(kube_config, target_context)
         # Now let's write namespace:pvc-name into a file for every remaining PV if not no_output
         if not no_output:
             with open('target_pvcs.txt', 'w') as f:
