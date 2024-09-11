@@ -23,7 +23,9 @@ def main(args):
         if (retrieve_pvcs == 'both' or retrieve_pvcs == 'target') and (
             not target_context
         ):
-            raise RuntimeError("Can't use options 'both' or 'target' without --target-context set")
+            raise RuntimeError(
+                "Can't use options 'both' or 'target' without --target-context set"
+            )
         else:
             retrieve_pvcs_from_clusters(
                 kube_config, retrieve_pvcs, source_context, target_context
@@ -37,10 +39,12 @@ def main(args):
     if mapping_file:
         if target_context:
             retrieve_dirs_from_mapping_file(
-                    mapping_file, kube_config, source_context, target_context
-                )
+                mapping_file, kube_config, source_context, target_context
+            )
         else:
-            raise RuntimeError('Please provide --target-context to be used with the mapping file')
+            raise RuntimeError(
+                'Please provide --target-context to be used with the mapping file'
+            )
 
 
 if __name__ == "__main__":
