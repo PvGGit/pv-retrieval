@@ -8,6 +8,20 @@ from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume 
 
 # Function to retrieve KUBECONFIG from the environment variables if present
 def retrieve_kubeconfig_env() -> str:
+    """
+    Retrieves the 'KUBECONFIG' environment variable.
+
+    This function attempts to retrieve the 'KUBECONFIG' environment variable, which specifies the path
+    to the kubeconfig file used by Kubernetes. If the environment variable is not set, a `RuntimeError`
+    is raised.
+
+    Returns:
+        str: The value of the 'KUBECONFIG' environment variable.
+
+    Raises:
+        RuntimeError: If 'KUBECONFIG' is not found in the environment variables, an error is raised with a message
+        instructing the user to specify a valid kubeconfig file.
+    """
     try:
         return os.environ['KUBECONFIG']
     except KeyError:
@@ -18,11 +32,40 @@ def retrieve_kubeconfig_env() -> str:
 
 # Function to list existing PersistentVolumes from a cluster
 def list_pvs(kube_config: str, context: str) -> V1PersistentVolumeList:
+    """
+    Lists Persistent Volumes (PVs) in a specified Kubernetes context.
+
+    This function loads the specified Kubernetes configuration file and uses the provided context
+    to create a connection to the Kubernetes cluster. It then retrieves and returns the list of
+    Persistent Volumes (PVs) in the cluster.
+
+    Args:
+        kube_config (str): Path to the kubeconfig file that contains the cluster configuration.
+        context (str): The context within the kubeconfig file to connect to.
+
+    Returns:
+        V1PersistentVolumeList: A list of Persistent Volumes (PVs) in the Kubernetes cluster.
+
+    """
     config.load_kube_config(config_file=kube_config)
     v1 = client.CoreV1Api(api_client=config.new_client_from_config(context=context))
     return v1.list_persistent_volume()
 
 def get_bound_pvcs(kube_config: str, context: str) -> list:
+    """
+    Retrieves a list of bound Persistent Volume Claims (PVCs) from a specified Kubernetes context.
+
+    This function loads the specified Kubernetes configuration file and uses the provided context
+    to connect to the Kubernetes cluster. It fetches the list of Persistent Volumes (PVs) and
+    returns the PVCs that are in the 'Bound' state, formatted as 'namespace:pvc_name'.
+
+    Args:
+        kube_config (str): Path to the kubeconfig file that contains the cluster configuration.
+        context (str): The context within the kubeconfig file to connect to.
+
+    Returns:
+        list: A list of strings representing bound PVCs, formatted as 'namespace:pvc_name'.
+    """
     config.load_kube_config(config_file=kube_config)
     v1 = client.CoreV1Api(
         api_client=config.new_client_from_config(context=context)
@@ -42,6 +85,23 @@ def retrieve_pvcs_from_clusters(
     source_context: str,
     target_context: str,
 ) -> Union[None, List[str]]:
+    """
+    Retrieves Persistent Volume Claims (PVCs) from specified Kubernetes clusters and writes them to files.
+
+    This function connects to two Kubernetes clusters specified by the `source_context` and `target_context`.
+    Based on the `target` argument, it retrieves the bound PVCs from either the source cluster, target cluster,
+    or both. The PVCs are written to text files, one for each context, with the format 'namespace:pvc_name'.
+    It also prints a message indicating the file has been written.
+
+    Args:
+        kube_config (str): Path to the kubeconfig file used to connect to the clusters.
+        target (str): Specifies the target to retrieve PVCs from; accepts 'source', 'target', or 'both'.
+        source_context (str): The Kubernetes context for the source cluster.
+        target_context (str): The Kubernetes context for the target cluster.
+
+    Returns:
+        None: This function returns `None` after writing the PVCs to files.
+    """
     config.load_kube_config(config_file=kube_config)
     # Retrieve the PVs from the source-context
     if target == 'source' or target == 'both':
@@ -72,6 +132,19 @@ def retrieve_pvcs_from_clusters(
 
 # Function to retrieve the active context from kube-config
 def retrieve_source_context(kube_config: str) -> str:
+    """
+    Retrieves the active context name from a specified Kubernetes configuration file.
+
+    This function loads the specified kubeconfig file and retrieves the active context name
+    from the Kubernetes configuration. The active context determines which cluster and namespace
+    the kubectl commands will interact with.
+
+    Args:
+        kube_config (str): Path to the kubeconfig file used to load the Kubernetes configuration.
+
+    Returns:
+        str: The name of the active context from the kubeconfig file.
+    """
     config.load_kube_config(config_file=kube_config)
     _, active_context = config.list_kube_config_contexts()
     return active_context['name']
@@ -79,6 +152,31 @@ def retrieve_source_context(kube_config: str) -> str:
 
 # Function to retrieve PVs from both clusters and match them together
 def retrieve_pvs(kube_config: str, source_context: str, target_context: str) -> None:
+    """
+    Retrieves and processes Persistent Volumes (PVs) from source and target Kubernetes contexts,
+    and matches them based on relevant criteria.
+
+    This function first retrieves the Persistent Volumes (PVs) from the source Kubernetes context and extracts
+    only those that are in the 'Bound' state. For each PV, the function extracts the name, associated PVC name,
+    namespace, and data directory.
+
+    The same process is then applied to the target Kubernetes context, provided that PVs were successfully retrieved
+    from the source context. Once both source and target PVs have been processed, the function calls `match_pvs` to
+    perform the matching between the two sets of PVs.
+
+    If no PVs are found in either the source or target context, a `RuntimeError` is raised.
+
+    Args:
+        kube_config (str): Path to the kubeconfig file used to load the Kubernetes configuration.
+        source_context (str): The Kubernetes context for the source cluster from which PVs are retrieved.
+        target_context (str): The Kubernetes context for the target cluster from which PVs are retrieved and matched.
+
+    Raises:
+        RuntimeError: If no PVs are found in either the source or target context.
+
+    Returns:
+        None
+    """
     source_pvs_full = list_pvs(kube_config, source_context)
     # If PVs were returned for source-context, we continue on to the target context
     if source_pvs_full:
@@ -144,6 +242,27 @@ def retrieve_pvs(kube_config: str, source_context: str, target_context: str) -> 
 
 # Function to match the retrieved PVs from source and target cluster in the situation where PVCs are named identically and in the same namespace (exact copy)
 def match_pvs(source_pvs: list, target_pvs: list) -> None:
+    """
+    Matches Persistent Volumes (PVs) from source and target clusters based on PVC name and namespace.
+
+    This function compares two lists of PVs, one from the source cluster and one from the target cluster,
+    and attempts to match them based on the PVC name (`pvc_name`) and namespace (`pvc_ns`). If a match is
+    found, the matching source and target PVs are added to a list of matched PVs. The function then prints
+    debugging information about the matched PVs. If no matches are found, a `RuntimeError` is raised.
+
+    Args:
+        source_pvs (list): A list of dictionaries representing PVs from the source cluster. Each dictionary contains
+                           keys such as 'name', 'pvc_name', 'pvc_ns', and 'data_dir'.
+        target_pvs (list): A list of dictionaries representing PVs from the target cluster, structured similarly
+                           to `source_pvs`.
+
+    Raises:
+        RuntimeError: If no matching PVs are found between the source and target clusters, the function raises an
+                      error prompting the user to supply a mapping file for manual resolution.
+
+    Returns:
+        None: The function does not return any value, but it prints information about matched PVs or raises an exception.
+    """
     matched_pvs = []
 
     # Loop through the source_pvs list and match pvc_name and pvc_ns onto target_pvs
@@ -183,6 +302,22 @@ def match_pvs(source_pvs: list, target_pvs: list) -> None:
 def select_pv_on_pvc(
     pv_list: list, ns: str, pvc_name: str
 ) -> Optional[V1PersistentVolume]:
+    """
+    Selects a Persistent Volume (PV) from a list based on the specified namespace and PVC name.
+
+    This function iterates over a list of Persistent Volumes (PVs) and returns the PV that matches
+    the provided namespace (`ns`) and Persistent Volume Claim (PVC) name (`pvc_name`). If no matching
+    PV is found, the function returns `None`.
+
+    Args:
+        pv_list (list): A list of `V1PersistentVolume` objects to search through.
+        ns (str): The namespace of the PVC to match.
+        pvc_name (str): The name of the PVC to match.
+
+    Returns:
+        Optional[V1PersistentVolume]: The matching `V1PersistentVolume` object if found,
+                                      otherwise `None`.
+    """
     for pv in pv_list:
         if pv.spec.claim_ref.namespace == ns and pv.spec.claim_ref.name == pvc_name:
             return pv
@@ -192,6 +327,31 @@ def select_pv_on_pvc(
 def retrieve_dirs_from_mapping_file(
     mapping_file: str, kube_config: str, source_context: str, target_context: str
 ) -> None:
+    """
+    Validates and processes Persistent Volume Claims (PVCs) from a mapping file and retrieves the corresponding
+    Persistent Volumes (PVs) from both source and target Kubernetes clusters.
+
+    This function reads a mapping file that specifies PVCs in the format 'namespace:pvc-name,namespace:pvc-name',
+    validates that the PVC names and namespaces conform to Kubernetes naming conventions, and ensures that the PVCs
+    exist in both the source and target clusters. It retrieves the corresponding Persistent Volumes (PVs) from the
+    clusters and matches them based on their PVCs, comparing details such as NFS paths or Ceph volume handles.
+
+    Args:
+        mapping_file (str): The path to the mapping file that contains PVCs from both the source and target clusters
+                            in the format 'namespace:pvc-name,namespace:pvc-name'.
+        kube_config (str): The path to the kubeconfig file used to authenticate and connect to the Kubernetes clusters.
+        source_context (str): The Kubernetes context for the source cluster from which the PVCs and PVs are retrieved.
+        target_context (str): The Kubernetes context for the target cluster from which the PVCs and PVs are retrieved.
+
+    Raises:
+        RuntimeError: If the entries in the mapping file are not properly formatted, if PVCs from the mapping file
+                      do not exist in the specified clusters, or if no bound PVs are found in either the source or
+                      target clusters. This error may also occur if a matching PV is not found for a given PVC.
+
+    Returns:
+        None: This function prints the matched PV details from the source and target clusters for debugging and
+              comparison purposes, but does not return a value.
+    """
     # Do entries in the mapping file conform to the expected pattern?
     pattern = r'[a-z0-9]([-a-z0-9]*[a-z0-9])?'
     full_pattern = re.compile(rf'^{pattern}:{pattern},{pattern}:{pattern}$')
