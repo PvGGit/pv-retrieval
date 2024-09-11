@@ -101,6 +101,7 @@ def retrieve_pvcs_from_clusters(
                 for volume in bound_target_volumes
             ]
             return bound_target_volumes
+        return None
 
 
 # Function to retrieve the active context from kube-config
@@ -219,6 +220,7 @@ def select_pv_on_pvc(
     for pv in pv_list:
         if pv.spec.claim_ref.namespace == ns and pv.spec.claim_ref.name == pvc_name:
             return pv
+    return None
 
 
 def retrieve_dirs_from_mapping_file(
@@ -253,6 +255,11 @@ def retrieve_dirs_from_mapping_file(
     cluster_target_pvcs = retrieve_pvcs_from_clusters(
         kube_config, 'target', source_context, target_context, True
     )
+
+    if cluster_source_pvcs is None:
+        raise RuntimeError('Cluster source PVCs is empty')
+    if cluster_target_pvcs is None:
+        raise RuntimeError('Cluster target PVCs is empty')
 
     # Now that we have the PVCs existing in the cluster, let's check the data we were given in the mappingfile.
     for item in mapping_file_source_pvcs:
@@ -293,6 +300,11 @@ def retrieve_dirs_from_mapping_file(
                 map_target = line.split(',')[1]
                 map_target_ns, map_target_name = map_target.split(':')
                 target_pv = select_pv_on_pvc(target_pvs, map_target_ns, map_target_name)
+
+                if source_pv is None:
+                    raise RuntimeError('No PV found for source PVC')
+                if target_pv is None:
+                    raise RuntimeError('No PV found for target PVC')
 
                 # Let's output these to the user
                 # For now, this is much prettier than the final version will be, but it allows for easy debugging/checking
