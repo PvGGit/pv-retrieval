@@ -7,7 +7,7 @@ import re
 from typing import Union, List, Optional
 
 # Imports for type hinting purposes
-from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
+from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume # type: ignore
 
 # Function to retrieve KUBECONFIG from the environment variables if present
 def retrieve_kubeconfig_env() -> str:
