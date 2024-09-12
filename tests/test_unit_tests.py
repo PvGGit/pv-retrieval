@@ -17,11 +17,11 @@ class TestWriteFile(unittest.TestCase):
         # Act: Call the function with the mocked file
         write_file(volumes, file_path)
 
+        # Check that the file was opened in write mode
+        mock_file.assert_called_with(file_path, 'w')
+
         # Assert: Check that the file was written to with the expected content
         handle = mock_file()
         handle.write.assert_any_call('volume1\n')
         handle.write.assert_any_call('volume2\n')
         handle.write.assert_any_call('volume3\n')
-
-        # Check that the file was opened in write mode
-        handle.assert_called_with(file_path, 'w')
