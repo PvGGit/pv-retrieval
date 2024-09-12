@@ -6,7 +6,7 @@ from functions import write_file, retrieve_kubeconfig_env
 # Tests for retrieve_kubeconfig_env
 class TestRetrieveKubeconfigEnv(unittest.TestCase):
     def test_kubeconfig_set(self):
-        with patch.dict(os.environ, {'KUBECONFIG', '/path/kubeconfig'}):
+        with patch.dict(os.environ, {'KUBECONFIG': '/path/kubeconfig'}):
             result = retrieve_kubeconfig_env()
             self.assertEqual(result, 'path/kubeconfig')
 
