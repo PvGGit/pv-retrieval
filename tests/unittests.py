@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import mock_open, patch
 from functions import write_file  # Import the function you're testing
 
-# Test for write_file function
+# Test for write_file
 class TestWriteFile(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open)
     def test_write_file(self, mock_file):
