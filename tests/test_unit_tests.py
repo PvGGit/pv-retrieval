@@ -1,6 +1,21 @@
 import unittest
+import os
 from unittest.mock import mock_open, patch
-from functions import write_file  # Import the function you're testing
+from functions import write_file, retrieve_kubeconfig_env
+
+# Tests for retrieve_kubeconfig_env
+class TestRetrieveKubeconfigEnv(unittest.TestCase):
+    def test_kubeconfig_set(self):
+        with patch.dict(os.environ, {'KUBECONFIG', '/path/kubeconfig'}):
+            result = retrieve_kubeconfig_env()
+            self.assertEqual(result, 'path/kubeconfig')
+
+    def test_kubeconfig_not_set(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(RuntimeError) as result:
+                retrieve_kubeconfig_env()
+            self.assertEqual(str(result.exception),
+                             'No KUBECONFIG found in environment variables, please specify a valid kube-config file')
 
 # Test for write_file function
 class TestWriteFile(unittest.TestCase):
@@ -10,17 +25,13 @@ class TestWriteFile(unittest.TestCase):
         Test that write_file writes the correct content to the file.
         """
 
-        # Arrange: Define the input data
         volumes = ['volume1', 'volume2', 'volume3']
         file_path = 'fake_file.txt'
 
-        # Act: Call the function with the mocked file
         write_file(volumes, file_path)
 
-        # Check that the file was opened in write mode
         mock_file.assert_called_with(file_path, 'w')
 
-        # Assert: Check that the file was written to with the expected content
         handle = mock_file()
         handle.write.assert_any_call('volume1\n')
         handle.write.assert_any_call('volume2\n')
