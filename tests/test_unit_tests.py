@@ -8,7 +8,7 @@ class TestRetrieveKubeconfigEnv(unittest.TestCase):
     def test_kubeconfig_set(self):
         with patch.dict(os.environ, {'KUBECONFIG': '/path/kubeconfig'}):
             result = retrieve_kubeconfig_env()
-            self.assertEqual(result, 'path/kubeconfig')
+            self.assertEqual(result, '/path/kubeconfig')
 
     def test_kubeconfig_not_set(self):
         with patch.dict(os.environ, {}, clear=True):
