@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import mock_open, patch, MagicMock
-from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters
+from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters, retrieve_source_context
 from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
 
 # Tests for retrieve_kubeconfig_env
@@ -141,3 +141,15 @@ class TestWriteFile(unittest.TestCase):
         handle.write.assert_any_call('volume1\n')
         handle.write.assert_any_call('volume2\n')
         handle.write.assert_any_call('volume3\n')
+
+class TestRetrieveSourceContext(unittest.TestCase):
+    @patch('kubernetes.config.load_kube_config')
+    @patch('kubernetes.config.list_kube_config_contexts')
+    def test_retrieve_source_context(self, mock_list_kube_config_contexts, mock_load_kube_config):
+        mock_list_kube_config_contexts.return_value = (None, {'name': 'active-context'})
+
+        active_context = retrieve_source_context('kube_config')
+
+        mock_load_kube_config.assert_called_once_with(config_file='kube_config')
+        mock_list_kube_config_contexts.assert_called_once()
+        self.assertEqual(active_context, 'active-context')
