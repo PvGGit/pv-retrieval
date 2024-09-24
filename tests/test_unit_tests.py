@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import mock_open, patch, MagicMock
-from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs
+from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters
 from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
 
 # Tests for retrieve_kubeconfig_env
@@ -71,6 +71,56 @@ class TestGetBoundPvcs(unittest.TestCase):
         mock_v1_api_instance.list_persistent_volume.assert_called_once()
 
         self.assertEqual(result, ['default:test-pvc'])
+
+# Test for retrieve_pvcs_from_cluster
+class TestRetrievePVCsFromCluster(unittest.TestCase):
+    @patch('functions.write_file')
+    @patch('functions.get_bound_pvcs')
+    @patch('kubernetes.config.load_kube_config')
+    @patch('builtins.print')
+    def test_retrieve_pvcs_from_source(self, mock_print, mock_load_kube_config, mock_get_bound_pvcs, mock_write_file):
+        mock_get_bound_pvcs.return_value = ['default:test-pvc']
+
+        retrieve_pvcs_from_clusters('kube_config', 'source', 'source_context', 'target_context')
+
+        mock_load_kube_config.assert_called_once_with(config_file='kube_config')
+        mock_get_bound_pvcs.assert_called_once_with('kube_config', 'source_context')
+        mock_write_file.assert_called_once_with(['default:test-pvc'], 'source_pvcs.txt')
+        mock_print.assert_called_once_with('PVCs for source-context source_context written to source_pvcs.txt')
+
+    @patch('functions.write_file')
+    @patch('functions.get_bound_pvcs')
+    @patch('kubernetes.config.load_kube_config')
+    @patch('builtins.print')
+    def test_retrieve_pvcs_from_target(self, mock_print, mock_load_kube_config, mock_get_bound_pvcs, mock_write_file):
+        mock_get_bound_pvcs.return_value = ['default:test-pvc']
+
+        retrieve_pvcs_from_clusters('kube_config', 'target', 'source_context', 'target_context')
+
+        mock_load_kube_config.assert_called_once_with(config_file='kube_config')
+        mock_get_bound_pvcs.assert_called_once_with('kube_config', 'target_context')
+        mock_write_file.assert_called_once_with(['default:test-pvc'], 'target_pvcs.txt')
+        mock_print.assert_called_once_with('PVCs for target-context target_context written to target_pvcs.txt')
+
+    @patch('functions.write_file')
+    @patch('functions.get_bound_pvcs')
+    @patch('kubernetes.config.load_kube_config')
+    @patch('builtins.print')
+    def test_retrieve_pvcs_from_both(self, mock_print, mock_load_kube_config, mock_get_bound_pvcs, mock_write_file):
+        mock_get_bound_pvcs.side_effect = [['default:source-pvc'], ['default:target-pvc']]
+
+        retrieve_pvcs_from_clusters('kube_config', 'both', 'source_context', 'target_context')
+
+        mock_load_kube_config.assert_called_once_with(config_file='kube_config')
+        self.assertEqual(mock_get_bound_pvcs.call_count, 2)
+        mock_get_bound_pvcs.assert_any_call('kube_config', 'source_context')
+        mock_get_bound_pvcs.assert_any_call('kube_config', 'target_context')
+        mock_write_file.assert_any_call(['default:source-pvc'], 'source_pvcs.txt')
+        mock_write_file.assert_any_call(['default:target-pvc'], 'target_pvcs.txt')
+        self.assertEqual(mock_print.call_count, 2)
+        mock_print.assert_any_call('PVCs for source-context source_context written to source_pvcs.txt')
+        mock_print.assert_any_call('PVCs for target-context target_context written to target_pvcs.txt')
+
 
 # Test for write_file function
 class TestWriteFile(unittest.TestCase):
