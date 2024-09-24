@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import mock_open, patch, MagicMock
-from functions import write_file, retrieve_kubeconfig_env, list_pvs
+from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs
 from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
 
 # Tests for retrieve_kubeconfig_env
@@ -24,7 +24,7 @@ class TestListPVs(unittest.TestCase):
     @patch('kubernetes.config.load_kube_config')
     @patch('kubernetes.client.CoreV1Api')
     def test_list_pvs(self, mock_core_v1_api, mock_load_kube_config, mock_new_client_from_config):
-        mock_pv_list = MagicMock(spec=V1PersistentVolumeList)  # Mock V1PersistentVolumeList object
+        mock_pv_list = MagicMock(spec=V1PersistentVolumeList)
         mock_core_v1_api_instance = mock_core_v1_api.return_value
         mock_core_v1_api_instance.list_persistent_volume.return_value = mock_pv_list
 
@@ -43,6 +43,34 @@ class TestListPVs(unittest.TestCase):
         mock_core_v1_api_instance.list_persistent_volume.assert_called_once()
         self.assertEqual(result, mock_pv_list)
 
+# Test for get_bound_pvcs
+class TestGetBoundPvcs(unittest.TestCase):
+    @patch('kubernetes.client.CoreV1Api')
+    @patch('kubernetes.config.load_kube_config')
+    @patch('kubernetes.config.new_client_from_config')
+    def test_get_bound_pvcs(self, mock_new_client, mock_load_kube_config, mock_core_v1_api):
+        mock_v1_api_instance = MagicMock()
+        mock_core_v1_api.return_value = mock_v1_api_instance
+
+        mock_volume_bound = MagicMock()
+        mock_volume_bound.status.phase = 'Bound'
+        mock_volume_bound.spec.claim_ref.namespace = 'default'
+        mock_volume_bound.spec.claim_ref.name = 'test-pvc'
+
+        mock_volume_unbound = MagicMock()
+        mock_volume_unbound.status.phase = 'Pending'
+
+        mock_v1_api_instance.list_persistent_volume.return_value.items = [
+            mock_volume_bound, mock_volume_unbound
+        ]
+
+        result = get_bound_pvcs('kube_config', 'context')
+
+        mock_load_kube_config.assert_called_once_with(config_file='kube_config')
+        mock_new_client.assert_called_once_with(context='context')
+        mock_v1_api_instance.list_persistent_volume.assert_called_once()
+
+        self.assertEqual(result, ['default:test-pvc'])
 
 # Test for write_file function
 class TestWriteFile(unittest.TestCase):
