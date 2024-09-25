@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import mock_open, patch, MagicMock
-from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters, retrieve_source_context
+from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters, retrieve_source_context, extract_values_from_pvs
 from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
 
 # Tests for retrieve_kubeconfig_env
@@ -153,3 +153,51 @@ class TestRetrieveSourceContext(unittest.TestCase):
         mock_load_kube_config.assert_called_once_with(config_file='kube_config')
         mock_list_kube_config_contexts.assert_called_once()
         self.assertEqual(active_context, 'active-context')
+
+class ExtractValuesFromPVs(unittest.TestCase):
+    def test_extract_values_from_pvs(self):
+        pv1 = MagicMock()
+        pv1.metadata.name = 'pv1'
+        pv1.status.phase = 'Bound'
+        pv1.spec.claim_ref.name = 'pvc1'
+        pv1.spec.claim_ref.namespace = 'default'
+        pv1.spec.nfs.path = '/nfs/path1'
+        pv1.spec.csi = None
+
+        pv2 = MagicMock()
+        pv2.metadata.name = 'pv2'
+        pv2.status.phase = 'Bound'
+        pv2.spec.claim_ref.name = 'pvc2'
+        pv2.spec.claim_ref.namespace = 'test'
+        pv2.spec.nfs = None
+        pv2.spec.csi.volume_handle = 'cephrdb-vol1'
+
+        pv3 = MagicMock()
+        pv3.metadata.name = 'pv3'
+        pv3.status.phase = 'Available'
+        pv3.spec.claim_ref.name = 'pvc3'
+        pv3.spec.claim_ref.namespace = 'default'
+        pv3.spec.nfs.path = '/nfs/path2'
+        pv3.spec.csi = None
+
+        pv_list = MagicMock()
+        pv_list.items = [pv1, pv2, pv3]
+
+        result = extract_values_from_pvs(pv_list)
+
+        expected_output = [
+            {
+                'name': 'pv1',
+                'pvc_name': 'pvc1',
+                'pvc_ns': 'default',
+                'data_dir': '/nfs/path1'
+            },
+            {
+                'name': 'pv2',
+                'pvc_name': 'pvc2',
+                'pvc_ns': 'test',
+                'data_dir': 'cephrdb-vol1'
+            }
+        ]
+
+        self.assertEqual(result, expected_output)
