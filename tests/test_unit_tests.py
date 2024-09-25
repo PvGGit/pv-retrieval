@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import mock_open, patch, MagicMock
-from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters, retrieve_source_context, extract_values_from_pvs
+from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters, retrieve_source_context, extract_values_from_pvs, retrieve_pvs
 from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
 
 # Tests for retrieve_kubeconfig_env
@@ -201,3 +201,51 @@ class ExtractValuesFromPVs(unittest.TestCase):
         ]
 
         self.assertEqual(result, expected_output)
+
+class TestRetrievePVs(unittest.TestCase):
+    @patch('functions.list_pvs')
+    @patch('functions.extract_values_from_pvs')
+    @patch('functions.match_pvs')
+    def test_retrieve_pvs_succesful_match(self, mock_match_pvs, mock_extract_values_from_pvs, mock_list_pvs):
+        mock_list_pvs.side_effect = [
+            MagicMock(),
+            MagicMock()
+        ]
+
+        mock_extract_values_from_pvs.side_effect = [
+            [{'name':'pv1', 'pvc_name':'pvc1', 'pvc_ns':'default', 'data_dir':'/nfs/path'}],
+            [{'name':'pv2', 'pvc_name':'pvc2', 'pvc_ns':'default', 'data_dir':'cephrdb-vol1'}]
+        ]
+
+        retrieve_pvs('kube_config', 'source-context', 'target-context')
+
+        self.assertEqual(mock_list_pvs.call_count, 2)
+        self.assertEqual(mock_extract_values_from_pvs.call_count, 2)
+        mock_match_pvs.assert_called_once_with(
+            [{'name':'pv1', 'pvc_name':'pvc1', 'pvc_ns':'default', 'data_dir':'/nfs/path'}],
+            [{'name':'pv2', 'pvc_name':'pvc2', 'pvc_ns':'default', 'data_dir':'cephrdb-vol1'}]
+        )
+
+    @patch('functions.list_pvs')
+    def test_retrieve_pvs_no_source_pvs(self, mock_list_pvs):
+        mock_list_pvs.side_effect = [
+            [],
+            MagicMock()
+        ]
+
+        with self.assertRaises(RuntimeError) as context:
+            retrieve_pvs('kube_config', 'source-context', 'target-context')
+
+        self.assertIn('No PersistentVolumes were found in source context', str(context.exception))
+
+    @patch('functions.list_pvs')
+    def test_retrieve_no_target_pvs(self, mock_list_pvs):
+        mock_list_pvs.side_effect = [
+            MagicMock(),
+            []
+        ]
+
+        with self.assertRaises(RuntimeError) as context:
+            retrieve_pvs('kube_config', 'source-context', 'target-context')
+
+        self.assertIn('No PersistentVolumes were found in target context', str(context.exception))
