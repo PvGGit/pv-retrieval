@@ -1,7 +1,7 @@
 import unittest
 import os
 from unittest.mock import mock_open, patch, MagicMock
-from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters, retrieve_source_context, extract_values_from_pvs, retrieve_pvs
+from functions import write_file, retrieve_kubeconfig_env, list_pvs, get_bound_pvcs, retrieve_pvcs_from_clusters, retrieve_source_context, extract_values_from_pvs, retrieve_pvs, match_pvs
 from kubernetes.client.models import V1PersistentVolumeList, V1PersistentVolume
 
 # Tests for retrieve_kubeconfig_env
@@ -249,3 +249,38 @@ class TestRetrievePVs(unittest.TestCase):
             retrieve_pvs('kube_config', 'source-context', 'target-context')
 
         self.assertIn('No PersistentVolumes were found in target context', str(context.exception))
+
+class TestMatchPVCs(unittest.TestCase):
+
+    @patch('builtins.print')
+    def test_match_pvcs_succesful(self, mock_print):
+        source_pvs = [
+            {'name': 'pv1', 'pvc_name': 'pvc1', 'pvc_ns': 'default', 'data_dir': '/nfs/path1'},
+            {'name': 'pv2', 'pvc_name': 'pvc2', 'pvc_ns': 'default', 'data_dir': '/nfs/path2'}
+        ]
+        target_pvs = [
+            {'name': 'target-pv1', 'pvc_name': 'pvc1', 'pvc_ns': 'default', 'data_dir': '/nfs/path1'},
+            {'name': 'target-pv2', 'pvc_name': 'pvc2', 'pvc_ns': 'default', 'data_dir': '/nfs/path2'}
+        ]
+
+        match_pvs(source_pvs, target_pvs)
+
+        self.assertEqual(mock_print.call_count, 4)
+        mock_print.assert_any_call("Source PV called pv1 matches with target PV called target-pv1")
+        mock_print.assert_any_call("Data dirs: /nfs/path1 /nfs/path1")
+        mock_print.assert_any_call("Source PV called pv2 matches with target PV called target-pv2")
+        mock_print.assert_any_call("Data dirs: /nfs/path2 /nfs/path2")
+
+    def test_match_pvcs_no_match(self):
+        source_pvs = [
+            {'name': 'pv1', 'pvc_name': 'pvc1', 'pvc_ns': 'default', 'data_dir': '/nfs/path1'}
+        ]
+
+        target_pvs = [
+            {'name': 'target-pv2', 'pvc_name': 'pvc2', 'pvc_ns': 'default', 'data_dir': '/nfs/path2'}
+        ]
+
+        with self.assertRaises(RuntimeError) as context:
+            match_pvs(source_pvs, target_pvs)
+
+        self.assertIn('PVCs in source and target cluster are not identical', str(context.exception))
