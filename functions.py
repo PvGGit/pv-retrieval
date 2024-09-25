@@ -197,7 +197,7 @@ def extract_values_from_pvs(pv_list: V1PersistentVolumeList) -> list:
                     item.spec.nfs.path if item.spec.nfs else item.spec.csi.volume_handle
                 ),
             }
-            for item in pvs.items
+            for item in pv_list.items
             if item.status.phase == 'Bound'
         ]
     return pvs
